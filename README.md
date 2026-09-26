@@ -1,0 +1,1 @@
+This is an OpenGL project made within the ZPG class (introduction to computer graphics).
