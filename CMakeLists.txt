@@ -17,8 +17,16 @@ target_include_directories(glad
         ${PROJECT_SOURCE_DIR}/external/glad/include
 )
 
+set(SHADER_FILES
+    ${PROJECT_SOURCE_DIR}/shaders/vertex/basic.vert
+    ${PROJECT_SOURCE_DIR}/shaders/fragment/basic.frag
+)
+
 add_executable(OpenGLProject
     src/main.cpp
+    src/shader.cpp
+    src/shaderprogram.cpp
+    ${SHADER_FILES}
 )
 
 target_include_directories(OpenGLProject
@@ -37,4 +45,10 @@ add_custom_command(TARGET OpenGLProject POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/assets
     $<TARGET_FILE_DIR:OpenGLProject>/assets
+)
+
+add_custom_command(TARGET OpenGLProject POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${PROJECT_SOURCE_DIR}/shaders
+    $<TARGET_FILE_DIR:OpenGLProject>/shaders
 )
