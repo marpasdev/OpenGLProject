@@ -22,8 +22,6 @@ GLuint Shader::createFromFile(GLenum type, const char* shaderFile) const {
     const char* source = shaderCode.c_str();
     glShaderSource(shaderID, 1, &source, nullptr);
 
-    std::cout << "Shader source: " << source << "\n";
-
     glCompileShader(shaderID);
 
     GLint success;

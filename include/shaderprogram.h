@@ -10,8 +10,12 @@ class ShaderProgram {
 
 public:
     ShaderProgram(const Shader& vertexShader, const Shader& fragmentShader);
+
+    ShaderProgram(const ShaderProgram& other) = delete;
     
     ~ShaderProgram();
+
+    ShaderProgram& operator=(const ShaderProgram& other) = delete;
 
     void use() const;
 
