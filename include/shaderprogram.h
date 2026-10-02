@@ -2,11 +2,16 @@
 #define SHADERPROGRAM_H
 
 #include <glad/gl.h>
+
 #include <vector>
+#include <string>
+
 #include "shader.h"
 
 class ShaderProgram {
     GLuint id = 0;
+
+    GLint getUniform(const std::string& name) const;
 
 public:
     ShaderProgram(const Shader& vertexShader, const Shader& fragmentShader);
@@ -20,6 +25,12 @@ public:
     void use() const;
 
     GLuint getID() const;
+
+    void setUniform(const std::string& name, GLfloat x) const;
+
+    void setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z) const;
+    
+    void setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z, GLfloat w) const;
 };
 
 #endif

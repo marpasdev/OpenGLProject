@@ -8,5 +8,6 @@ void Scene::render() const {
     for (const RenderMesh rm : renderMeshes) {
         rm.program->use();
         rm.mesh->render();
+        glUseProgram(0);
     }
 }

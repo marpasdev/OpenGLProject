@@ -33,3 +33,50 @@ void ShaderProgram::use() const {
 GLuint ShaderProgram::getID() const {
     return id;
 }
+
+GLint ShaderProgram::getUniform(const std::string& name) const {
+    GLint loc = glGetUniformLocation(id, name.c_str());
+
+    if (loc == -1) {
+        std::cerr << "Uniform '" << name << "' not found in shader program "
+        << id << ". It may be unused or misspelled.\n";
+    }
+
+    return loc;
+}
+
+void ShaderProgram::setUniform(const std::string& name, GLfloat x) const {
+    GLint loc = getUniform(name);
+    
+    if (loc != -1) {
+        glUseProgram(id);
+
+        glUniform1f(loc, x);
+
+        glUseProgram(0);
+    }
+}
+
+void ShaderProgram::setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z) const {
+    GLint loc = getUniform(name);
+
+    if (loc != -1) {
+        glUseProgram(id);
+
+        glUniform3f(loc, x, y, z);
+
+        glUseProgram(0);
+    }
+}
+
+void ShaderProgram::setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z, GLfloat w) const {
+    GLint loc = getUniform(name);
+    
+    if (loc != -1) {
+        glUseProgram(id);
+
+        glUniform4f(loc, x, y, z, w);
+
+        glUseProgram(0);
+    }
+}
