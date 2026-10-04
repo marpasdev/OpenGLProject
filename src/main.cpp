@@ -22,7 +22,7 @@
 int main() {
     auto app = std::make_unique<Application>();
 
-    app->initialize();
+    app->initialize(1200, 1200);
 
     app->createShaders();
     app->createModels();

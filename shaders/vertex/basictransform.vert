@@ -12,14 +12,30 @@ out vec3 vertexColor;
 void main() {
     vertexColor = color;
 
-    float c = cos(rotation.y);
-    float s = sin(rotation.y);
+    float cx = cos(rotation.x);
+    float sx = sin(rotation.x);
+
+    float cy = cos(rotation.y);
+    float sy = sin(rotation.y);
+
+    float cz = cos(rotation.z);
+    float sz = sin(rotation.z);
 
     vec3 scaled = pos * scale;
-    vec3 rotated = vec3(
-        c * scaled.x + s * scaled.z,
-        scaled.y,
-        -s * scaled.x + c * scaled.z
+    vec3 rotatedX = vec3(
+        scaled.x,
+        cx * (scaled.y) - sx * (scaled.z),
+        sx * (scaled.y) + cx * (scaled.z)
+    );
+    vec3 rotatedY = vec3(
+        cy * rotatedX.x + sy * rotatedX.z,
+        rotatedX.y,
+        -sy * rotatedX.x + cy * rotatedX.z
         );
-    gl_Position = vec4(rotated + translation, 1.0);
+    vec3 rotatedZ = vec3(
+        cz * (rotatedY.x) - sz * (rotatedY.y),
+        sz * (rotatedY.x) + cz * (rotatedY.y),
+        rotatedY.z
+    );
+    gl_Position = vec4(rotatedZ + translation, 1.0);
 }

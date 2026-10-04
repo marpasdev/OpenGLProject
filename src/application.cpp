@@ -15,6 +15,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <random>
+
+#include <glm/trigonometric.hpp>
 
 #include "models/tree.h"
 #include "models/sphere.h"
@@ -37,7 +40,7 @@ Application::~Application() {
 	glfwTerminate();
 }
 
-void Application::initializeGLFW() {
+void Application::initializeGLFW(int width, int height) {
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
 	
@@ -47,7 +50,7 @@ void Application::initializeGLFW() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE,
 	GLFW_OPENGL_CORE_PROFILE);
 
-	window.reset(glfwCreateWindow(1200, 900, "OpenGL Project", NULL, NULL));
+	window.reset(glfwCreateWindow(width, height, "OpenGL Project", NULL, NULL));
 	if (!window.get())
 	{
 		glfwTerminate();
@@ -61,8 +64,8 @@ void Application::initializeGLFW() {
 	glfwSetKeyCallback(window.get(), keyCallback);
 }
 
-void Application::initialize() {
-	initializeGLFW();
+void Application::initialize(int windowWidth, int windowHeight) {
+	initializeGLFW(windowWidth, windowHeight);
 	
 	if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress))
 	{
@@ -107,6 +110,7 @@ void Application::createShaders() {
 	shaders["green"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/green.frag");
 	shaders["lightGreen"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/lightgreen.frag");
 	shaders["yellow"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/yellow.frag");
+	shaders["blue"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/blue.frag");
 }
 
 void Application::createPrograms() {
@@ -114,29 +118,101 @@ void Application::createPrograms() {
 	programs["green"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("green"));
 	programs["lightGreen"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("lightGreen"));
 	programs["yellow"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("yellow"));
+	programs["blue"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("blue"));
 }
 
 void Application::createScenes() {
 
     std::vector<DrawableObject> objects;
 
+	// Scene 0
 	objects.push_back(DrawableObject(models.at("triangle").get(),
 								programs.at("basic").get()));
+	objects.push_back(DrawableObject(models.at("login").get(),
+									programs.at("basic").get(),
+								Transformation(
+									glm::vec3{0.8f, -0.8f, 0.0f},
+									glm::vec3(0.0f, glm::radians(15.0f), 0.0f),
+									glm::vec3{0.2f}
+								)));
 	scenes.push_back(Scene(objects));
 
+	// Scene 1
 	objects.clear();
 	objects.push_back(DrawableObject(models.at("sphere").get(),
 								programs.at("basic").get()));
+	objects.push_back(DrawableObject(models.at("login").get(),
+									programs.at("basic").get(),
+								Transformation(
+									glm::vec3{0.8f, -0.8f, 0.0f},
+									glm::vec3(0.0f, glm::radians(15.0f), 0.0f),
+									glm::vec3{0.2f}
+								)));
 	scenes.push_back(Scene(objects));
 	
+	std::mt19937 rng{std::random_device{}()};
+
+	std::uniform_real_distribution<float> dist(-0.8f, 0.8f);
+	std::uniform_real_distribution<float> randomAngle(0, 360);
+	
+	// Scene 2
 	objects.clear();
-	// objects.push_back(DrawableObject(models.at("tree").get(),
-	// 								 programs.at("basic").get(),
-	// 								 Transformation(
-	// 									glm::vec3{0.0f, -0.5f, 0.0f},
-	// 									glm::vec3(0.0f, 1.0f, 0.0f),
-	// 									glm::vec3{0.2f}
-	// 								 )));
+	objects.push_back(DrawableObject(models.at("plain").get(),
+									programs.at("lightGreen").get(),
+									Transformation(
+										glm::vec3{0.0f, 0.0f, 0.2f},
+										glm::vec3(glm::radians(90.0f), 0.0f, 0.0f),
+										glm::vec3{1.0f}
+									)));
+	objects.push_back(DrawableObject(models.at("plain").get(),
+									programs.at("blue").get(),
+									Transformation(
+										glm::vec3{0.0f, 1.8f, 0.1f},
+										glm::vec3(glm::radians(90.0f), 0.0f, 0.0f),
+										glm::vec3{1.0f}
+									)));
+	for (size_t i = 0; i < 15; ++i) {
+		objects.push_back(DrawableObject(models.at("tree").get(),
+										programs.at("green").get(),
+										Transformation(
+											glm::vec3{dist(rng), dist(rng) - 0.2f, 0.0f},
+											glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f),
+											glm::vec3{0.04f}
+										)));
+		objects.push_back(DrawableObject(models.at("bushes").get(),
+										programs.at("green").get(),
+										Transformation(
+											glm::vec3{dist(rng), dist(rng), 0.0f},
+											glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f),
+											glm::vec3{0.2f}
+										)));
+	}
+	objects.push_back(DrawableObject(models.at("sphere").get(),
+									 programs.at("yellow").get(),
+									 Transformation(
+										glm::vec3{0.0f, 0.9f, 0.0f},
+										glm::vec3(0.0f),
+										glm::vec3{0.05f}
+									 )));
+	objects.push_back(DrawableObject(models.at("login").get(),
+									programs.at("basic").get(),
+								Transformation(
+									glm::vec3{0.8f, -0.8f, -0.1f},
+									glm::vec3(0.0f, glm::radians(15.0f), 0.0f),
+									glm::vec3{0.2}
+								)));
+	scenes.push_back(objects);
+
+	// Scene 3
+	objects.clear();
+	objects.push_back(DrawableObject(models.at("login").get(),
+									programs.at("basic").get(),
+								Transformation(
+									glm::vec3{0.0f},
+									glm::vec3(0.0f, glm::radians(30.0f), 0.0f),
+									glm::vec3{0.7f}
+								)));
+	scenes.push_back(objects);
 }
 
 void Application::keyCallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {

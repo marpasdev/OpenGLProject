@@ -34,7 +34,7 @@ class Application {
     std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
     std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
 
-    void initializeGLFW();
+    void initializeGLFW(int width, int height);
 
 public:
     Application() = default;    
@@ -45,7 +45,7 @@ public:
 
     Application& operator=(const Application& other) = delete;
 
-    void initialize();
+    void initialize(int windowWidth, int windowHeight);
 
     void createShaders();
 
