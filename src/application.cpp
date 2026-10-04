@@ -1,3 +1,15 @@
+/**
+ * @file application.cpp
+ *
+ * @brief A class that manages scenes and their resources.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #include <glad/gl.h>
 
 #include <cstdlib>
@@ -11,19 +23,11 @@
 #include "application.h"
 
 Application::~Application() {
-	for (const auto& m : models) {
-		delete m.second;
-	}
-
-	for (const auto& p : programs) {
-		delete p.second;
-	}
-
-	for (const auto& s : shaders) {
-		delete s.second;
-	}
-
-    glfwDestroyWindow(window);
+	scenes.clear();
+	programs.clear();
+	shaders.clear();
+	models.clear();
+	window.reset();
 	glfwTerminate();
 }
 
@@ -37,14 +41,14 @@ void Application::initializeGLFW() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE,
 	GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(800, 600, "OpenGL Project", NULL, NULL);
-	if (!window)
+	window.reset(glfwCreateWindow(1200, 900, "OpenGL Project", NULL, NULL));
+	if (!window.get())
 	{
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
 	
-	glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(window.get());
 	glfwSwapInterval(1);
 }
 
@@ -68,7 +72,7 @@ void Application::createModels() {
         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
         -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f
     };
-    models["triangle"] =  new Mesh(points, sizeof(points));
+    models["triangle"] = std::make_unique<Mesh>(points, sizeof(points));
 
     float square[] = {
         -0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -78,37 +82,36 @@ void Application::createModels() {
         0.5f, aspectRatio * -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
         0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 1.0f, 0.0f
     };
-    models["square"] = new Mesh(square, sizeof(square));
-
-    models["tree"] = new Mesh(tree, sizeof(tree));
-    models["gift"] = new Mesh(gift, sizeof(gift));
-    models["login"] = new Mesh(login, sizeof(login));
+	models["square"] = std::make_unique<Mesh>(square, sizeof(square));
+    models["login"] = std::make_unique<Mesh>(login, sizeof(login));
+	models["tree"] = std::make_unique<Mesh>(tree, sizeof(tree));
+	models["gift"] = std::make_unique<Mesh>(gift, sizeof(gift));
 }
 
 void Application::createShaders() {
-    shaders["basicVert"] = new Shader(GL_VERTEX_SHADER, "shaders/vertex/basic.vert");
-    shaders["basicFrag"] = new Shader(GL_FRAGMENT_SHADER, "shaders/fragment/basic.frag");
+    shaders["basicVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/basic.vert");
+    shaders["basicFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/basic.frag");
 
-    shaders["scaledownVert"] = new Shader(GL_VERTEX_SHADER, "shaders/vertex/scaledown.vert");
-    shaders["moveVert"] = new Shader(GL_VERTEX_SHADER, "shaders/vertex/move.vert");
+    shaders["scaledownVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/scaledown.vert");
+    shaders["moveVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/move.vert");
 
-    shaders["greenFrag"] = new Shader(GL_FRAGMENT_SHADER, "shaders/fragment/green.frag");
-    shaders["reddishFrag"] = new Shader(GL_FRAGMENT_SHADER, "shaders/fragment/reddish.frag");
+    shaders["greenFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/green.frag");
+    shaders["reddishFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/reddish.frag");
    
-    shaders["translation"] = new Shader(GL_VERTEX_SHADER, "shaders/vertex/translation.vert");
+    shaders["translation"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/translation.vert");
 
-	shaders["transformVert"] = new Shader(GL_VERTEX_SHADER, "shaders/vertex/transform.vert");
+	shaders["transformVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/transform.vert");
 }
 
 void Application::createPrograms() {
 
-    programs["prog1"] = new ShaderProgram(*shaders["basicVert"], *shaders["basicFrag"]);
-    programs["prog2"] = new ShaderProgram(*shaders["scaledownVert"], *shaders["greenFrag"]);
-    programs["prog3"] = new ShaderProgram(*shaders["moveVert"], *shaders["reddishFrag"]);
+    programs["prog1"] = std::make_unique<ShaderProgram>(*shaders["basicVert"], *shaders["basicFrag"]);
+    programs["prog2"] = std::make_unique<ShaderProgram>(*shaders["scaledownVert"], *shaders["greenFrag"]);
+    programs["prog3"] = std::make_unique<ShaderProgram>(*shaders["moveVert"], *shaders["reddishFrag"]);
 
-    programs["translation"] = new ShaderProgram(*shaders["translation"], *shaders["basicFrag"]);
+    programs["translation"] = std::make_unique<ShaderProgram>(*shaders["translation"], *shaders["basicFrag"]);
 
-	programs["transformProg"] = new ShaderProgram(*shaders["transformVert"], *shaders["basicFrag"]);
+	programs["transformProg"] = std::make_unique<ShaderProgram>(*shaders["transformVert"], *shaders["basicFrag"]);
 	programs["transformProg"]->setUniform("translation", 0.0f, -0.5f, 0.0f);
 	programs["transformProg"]->setUniform("rotY", 1.0f);
 	programs["transformProg"]->setUniform("scale", 0.2f, 0.2f, 0.2f);
@@ -117,25 +120,24 @@ void Application::createPrograms() {
 void Application::createScenes() {
 
     std::vector<RenderMesh> meshes;
-    // meshes.emplace_back(RenderMesh(models["triangle"], programs["transformProg"]));
-    // meshes.emplace_back(RenderMesh(models["square"], programs["prog2"]));
-    // meshes.emplace_back(RenderMesh(models["tree"], programs["prog3"]));
-    // meshes.emplace_back(RenderMesh(models["gift"], programs["prog2"]));
-    meshes.emplace_back(RenderMesh(models["tree"], programs["transformProg"]));
+    // meshes.push_back({RenderMesh(models.at("triangle").get(), programs.at("transformProg").get()});
+    // meshes.push_back({RenderMesh(models.at("square").get(), programs.at("prog2").get()});
+    // meshes.push_back({RenderMesh(models.at("tree").get(), programs.at("prog3").get()});
+    // meshes.push_back({RenderMesh(models.at("gift").get(), programs.at("prog2").get()});
+    meshes.push_back({models.at("tree").get(), programs.at("transformProg").get()});
 
-    Scene scene1 = Scene(meshes);
-	scenes.push_back(scene1);
+	scenes.emplace_back(std::move(meshes));
 }
 
 void Application::run() const {
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window.get())) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (scenes.size() > 0) {
 			scenes[0].render();
 		}
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window.get());
         glfwPollEvents();
     }
 }

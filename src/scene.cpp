@@ -1,8 +1,18 @@
+/**
+ * @file scene.cpp
+ *
+ * @brief Holds a collection of models and their respective shader programs for rendering.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #include "scene.h"
 
-RenderMesh::RenderMesh(Mesh* mesh, ShaderProgram* program) : mesh(mesh), program(program) {}
-
-Scene::Scene(const std::vector<RenderMesh>& renderMeshes) : renderMeshes(renderMeshes) {}
+Scene::Scene(std::vector<RenderMesh> renderMeshes) : renderMeshes(renderMeshes) {}
 
 void Scene::render() const {
     for (const RenderMesh rm : renderMeshes) {

@@ -1,3 +1,15 @@
+/**
+ * @file mesh.cpp
+ *
+ * @brief A wrapper over VAO and VBO.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #include "mesh.h"
 
 Mesh::Mesh(const float* vertices, size_t size) {

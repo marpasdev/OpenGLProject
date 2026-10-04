@@ -1,3 +1,15 @@
+/**
+ * @file mesh.h
+ *
+ * @brief Declaration of the Mesh class, which is a wrapper over VAO and VBO.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #ifndef MESH_H
 #define MESH_H
 
@@ -21,4 +33,4 @@ public:
     void render() const;
 };
 
-#endif
+#endif // MESH_H

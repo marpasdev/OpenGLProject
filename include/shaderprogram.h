@@ -1,9 +1,20 @@
+/**
+ * @file shaderprogram.h
+ *
+ * @brief Declaration of the ShaderProgram class, which wraps a compiled shader program consisting of a vertex and a fragment shader.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #ifndef SHADERPROGRAM_H
 #define SHADERPROGRAM_H
 
 #include <glad/gl.h>
 
-#include <vector>
 #include <string>
 
 #include "shader.h"
@@ -33,4 +44,4 @@ public:
     void setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z, GLfloat w) const;
 };
 
-#endif
+#endif // SHADERPROGRAM_H

@@ -1,10 +1,22 @@
+/**
+ * @file shader.cpp
+ *
+ * @brief Wraps a compiled shader.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #include <iostream>
 #include <fstream>
 
 #include "shader.h"
 
-GLuint Shader::createFromFile(GLenum type, const char* shaderFile) const {
-    GLuint shaderID = glCreateShader(type);
+GLuint Shader::createFromFile(GLenum shaderType, const char* shaderFile) const {
+    GLuint shaderID = glCreateShader(shaderType);
 
     if (shaderID == 0) {
         std::cerr << "Unable to create shader\n";

@@ -1,3 +1,15 @@
+/**
+ * @file shader.h
+ *
+ * @brief Declaration of the Shader class, which wraps a compiled shader.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #ifndef SHADER_H
 #define SHADER_H
 
@@ -21,4 +33,4 @@ public:
     GLuint getID() const;
 };
 
-#endif
+#endif // SHADER_H

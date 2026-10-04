@@ -1,3 +1,15 @@
+/**
+ * @file shaderprogram.cpp
+ *
+ * @brief Wraps a compiled shader program consisting of a vertex and a fragment shader.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #include <iostream>
 
 #include "shaderprogram.h"

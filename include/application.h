@@ -1,3 +1,15 @@
+/**
+ * @file application.h
+ *
+ * @brief Declaration of the Application class that manages scenes and their resources.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
@@ -6,15 +18,22 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <memory>
 
 #include "scene.h"
 
+struct WindowDeleter {
+    void operator()(GLFWwindow* window) {
+        glfwDestroyWindow(window);
+    }
+};
+
 class Application {
-    GLFWwindow* window;
+    std::unique_ptr<GLFWwindow, WindowDeleter> window;
     std::vector<Scene> scenes;
-    std::unordered_map<std::string, Mesh*> models;
-    std::unordered_map<std::string, Shader*> shaders;
-    std::unordered_map<std::string, ShaderProgram*> programs;
+    std::unordered_map<std::string, std::unique_ptr<Mesh>> models;
+    std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
+    std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
 
     void initializeGLFW();
 
@@ -42,4 +61,4 @@ public:
     void getVersionInfo() const;
 };
 
-#endif
+#endif // APPLICATION_H

@@ -1,3 +1,15 @@
+/**
+ * @file scene.h
+ *
+ * @brief Declaration of the Scene class, which holds a collection of models and their respective shader programs for rendering.
+ *
+ * @author Marek Pastva
+ * 
+ * @login PAS0217
+ *
+ * @year 2026
+ **/
+
 #ifndef SCENE_H
 #define SCENE_H
 
@@ -9,18 +21,16 @@
 struct RenderMesh {
     Mesh* mesh;
     ShaderProgram* program;
-
-    RenderMesh(Mesh* mesh, ShaderProgram* program);
 };
 
 class Scene {
     std::vector<RenderMesh> renderMeshes; 
 
 public:
-    Scene(const std::vector<RenderMesh>& renderMeshes);
+    Scene(std::vector<RenderMesh> renderMeshes);
 
     void render() const;
 };
 
 
-#endif
+#endif // SCENE_H
