@@ -15,22 +15,15 @@
 
 #include <vector>
 
-#include "mesh.h"
-#include "shaderprogram.h"
-
-struct RenderMesh {
-    Mesh* mesh;
-    ShaderProgram* program;
-};
+#include "drawableobject.h"
 
 class Scene {
-    std::vector<RenderMesh> renderMeshes; 
+    std::vector<DrawableObject> objects;
 
 public:
-    Scene(std::vector<RenderMesh> renderMeshes);
+    Scene(std::vector<DrawableObject> drawableObjects);
 
     void render() const;
 };
-
 
 #endif // SCENE_H

@@ -5,15 +5,15 @@ layout (location = 1) in vec3 color;
 
 uniform vec3 translation;
 uniform vec3 scale = vec3(1.0);
-uniform float rotY;
+uniform vec3 rotation;
 
 out vec3 vertexColor;
 
 void main() {
     vertexColor = color;
 
-    float c = cos(rotY);
-    float s = sin(rotY);
+    float c = cos(rotation.y);
+    float s = sin(rotation.y);
 
     vec3 scaled = pos * scale;
     vec3 rotated = vec3(

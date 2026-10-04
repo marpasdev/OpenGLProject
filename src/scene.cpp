@@ -12,12 +12,10 @@
 
 #include "scene.h"
 
-Scene::Scene(std::vector<RenderMesh> renderMeshes) : renderMeshes(renderMeshes) {}
+Scene::Scene(std::vector<DrawableObject> objects) : objects(objects) {}
 
 void Scene::render() const {
-    for (const RenderMesh rm : renderMeshes) {
-        rm.program->use();
-        rm.mesh->render();
-        glUseProgram(0);
+    for (const DrawableObject& o : objects) {
+        o.draw();
     }
 }

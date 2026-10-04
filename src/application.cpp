@@ -72,7 +72,7 @@ void Application::createModels() {
         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
         -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f
     };
-    models["triangle"] = std::make_unique<Mesh>(points, sizeof(points));
+    models["triangle"] = std::make_unique<Model>(points, sizeof(points));
 
     float square[] = {
         -0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -82,51 +82,33 @@ void Application::createModels() {
         0.5f, aspectRatio * -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
         0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 1.0f, 0.0f
     };
-	models["square"] = std::make_unique<Mesh>(square, sizeof(square));
-    models["login"] = std::make_unique<Mesh>(login, sizeof(login));
-	models["tree"] = std::make_unique<Mesh>(tree, sizeof(tree));
-	models["gift"] = std::make_unique<Mesh>(gift, sizeof(gift));
+	models["square"] = std::make_unique<Model>(square, sizeof(square));
+    models["login"] = std::make_unique<Model>(login, sizeof(login));
+	models["tree"] = std::make_unique<Model>(tree, sizeof(tree));
+	models["gift"] = std::make_unique<Model>(gift, sizeof(gift));
 }
 
 void Application::createShaders() {
-    shaders["basicVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/basic.vert");
     shaders["basicFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/basic.frag");
-
-    shaders["scaledownVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/scaledown.vert");
-    shaders["moveVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/move.vert");
-
-    shaders["greenFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/green.frag");
-    shaders["reddishFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/reddish.frag");
-   
-    shaders["translation"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/translation.vert");
-
 	shaders["transformVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/transform.vert");
 }
 
 void Application::createPrograms() {
-
-    programs["prog1"] = std::make_unique<ShaderProgram>(*shaders["basicVert"], *shaders["basicFrag"]);
-    programs["prog2"] = std::make_unique<ShaderProgram>(*shaders["scaledownVert"], *shaders["greenFrag"]);
-    programs["prog3"] = std::make_unique<ShaderProgram>(*shaders["moveVert"], *shaders["reddishFrag"]);
-
-    programs["translation"] = std::make_unique<ShaderProgram>(*shaders["translation"], *shaders["basicFrag"]);
-
 	programs["transformProg"] = std::make_unique<ShaderProgram>(*shaders["transformVert"], *shaders["basicFrag"]);
-	programs["transformProg"]->setUniform("translation", 0.0f, -0.5f, 0.0f);
-	programs["transformProg"]->setUniform("rotY", 1.0f);
-	programs["transformProg"]->setUniform("scale", 0.2f, 0.2f, 0.2f);
 }
 
 void Application::createScenes() {
 
-    std::vector<RenderMesh> meshes;
-    // meshes.push_back({RenderMesh(models.at("triangle").get(), programs.at("transformProg").get()});
-    // meshes.push_back({RenderMesh(models.at("square").get(), programs.at("prog2").get()});
-    // meshes.push_back({RenderMesh(models.at("tree").get(), programs.at("prog3").get()});
-    // meshes.push_back({RenderMesh(models.at("gift").get(), programs.at("prog2").get()});
-    meshes.push_back({models.at("tree").get(), programs.at("transformProg").get()});
+    std::vector<DrawableObject> objects;
+	objects.push_back(DrawableObject(models.at("tree").get(),
+									 programs.at("transformProg").get(),
+									 Transformation(
+										glm::vec3{0.0f, -0.5f, 0.0f},
+										glm::vec3(0.0f, 1.0f, 0.0f),
+										glm::vec3{0.2f}
+									 )));
 
-	scenes.emplace_back(std::move(meshes));
+	scenes.emplace_back(std::move(objects));
 }
 
 void Application::run() const {

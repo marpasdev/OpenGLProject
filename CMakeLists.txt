@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
 
 add_library(glad STATIC
     external/glad/src/gl.c
@@ -21,7 +22,9 @@ add_executable(OpenGLProject
     src/main.cpp
     src/shader.cpp
     src/shaderprogram.cpp
-    src/mesh.cpp
+    src/transformation.cpp
+    src/model.cpp
+    src/drawableobject.cpp
     src/scene.cpp
     src/application.cpp
 )
@@ -35,6 +38,7 @@ target_link_libraries(OpenGLProject
     PRIVATE
         glad
         glfw
+        glm::glm
         OpenGL::GL
 )
 

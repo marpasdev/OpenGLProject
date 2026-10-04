@@ -31,7 +31,7 @@ struct WindowDeleter {
 class Application {
     std::unique_ptr<GLFWwindow, WindowDeleter> window;
     std::vector<Scene> scenes;
-    std::unordered_map<std::string, std::unique_ptr<Mesh>> models;
+    std::unordered_map<std::string, std::unique_ptr<Model>> models;
     std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
     std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
 

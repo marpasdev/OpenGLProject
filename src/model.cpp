@@ -10,9 +10,9 @@
  * @year 2026
  **/
 
-#include "mesh.h"
+#include "model.h"
 
-Mesh::Mesh(const float* vertices, size_t size) {
+Model::Model(const float* vertices, size_t size) {
     vertexCount = size / (6 * sizeof(float));
 
     glGenVertexArrays(1, &vao);
@@ -29,12 +29,12 @@ Mesh::Mesh(const float* vertices, size_t size) {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
 }
 
-Mesh::~Mesh() {
+Model::~Model() {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
 }
 
-void Mesh::render() const {
+void Model::render() const {
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 }
