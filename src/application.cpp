@@ -17,10 +17,16 @@
 #include <iostream>
 
 #include "models/tree.h"
-#include "models/gift.h"
+#include "models/sphere.h"
+#include "models/bushes.h"
+#include "models/plain.h"
 #include "models/login.h"
 
 #include "application.h"
+
+void WindowDeleter::operator()(GLFWwindow* window) {
+	glfwDestroyWindow(window);
+}
 
 Application::~Application() {
 	scenes.clear();
@@ -50,6 +56,9 @@ void Application::initializeGLFW() {
 	
 	glfwMakeContextCurrent(window.get());
 	glfwSwapInterval(1);
+
+	glfwSetWindowUserPointer(window.get(), this);
+	glfwSetKeyCallback(window.get(), keyCallback);
 }
 
 void Application::initialize() {
@@ -83,41 +92,83 @@ void Application::createModels() {
         0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 1.0f, 0.0f
     };
 	models["square"] = std::make_unique<Model>(square, sizeof(square));
+	models["sphere"] = std::make_unique<Model>(sphere, sizeof(sphere));
+	models["plain"] = std::make_unique<Model>(plain, sizeof(plain));
     models["login"] = std::make_unique<Model>(login, sizeof(login));
 	models["tree"] = std::make_unique<Model>(tree, sizeof(tree));
-	models["gift"] = std::make_unique<Model>(gift, sizeof(gift));
+	models["bushes"] = std::make_unique<Model>(bushes, sizeof(bushes));
 }
 
 void Application::createShaders() {
+	shaders["basicTransformVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/basictransform.vert");
+
     shaders["basicFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/basic.frag");
-	shaders["transformVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/transform.vert");
+
+	shaders["green"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/green.frag");
+	shaders["lightGreen"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/lightgreen.frag");
+	shaders["yellow"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/yellow.frag");
 }
 
 void Application::createPrograms() {
-	programs["transformProg"] = std::make_unique<ShaderProgram>(*shaders["transformVert"], *shaders["basicFrag"]);
+	programs["basic"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders["basicFrag"]);
+	programs["green"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("green"));
+	programs["lightGreen"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("lightGreen"));
+	programs["yellow"] = std::make_unique<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("yellow"));
 }
 
 void Application::createScenes() {
 
     std::vector<DrawableObject> objects;
-	objects.push_back(DrawableObject(models.at("tree").get(),
-									 programs.at("transformProg").get(),
-									 Transformation(
-										glm::vec3{0.0f, -0.5f, 0.0f},
-										glm::vec3(0.0f, 1.0f, 0.0f),
-										glm::vec3{0.2f}
-									 )));
 
-	scenes.emplace_back(std::move(objects));
+	objects.push_back(DrawableObject(models.at("triangle").get(),
+								programs.at("basic").get()));
+	scenes.push_back(Scene(objects));
+
+	objects.clear();
+	objects.push_back(DrawableObject(models.at("sphere").get(),
+								programs.at("basic").get()));
+	scenes.push_back(Scene(objects));
+	
+	objects.clear();
+	// objects.push_back(DrawableObject(models.at("tree").get(),
+	// 								 programs.at("basic").get(),
+	// 								 Transformation(
+	// 									glm::vec3{0.0f, -0.5f, 0.0f},
+	// 									glm::vec3(0.0f, 1.0f, 0.0f),
+	// 									glm::vec3{0.2f}
+	// 								 )));
+}
+
+void Application::keyCallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {
+	auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+	if (app) {
+		app->onKey(key, action);
+	}
+}
+
+void Application::onKey(int key, int action) {
+	if (key == GLFW_KEY_ESCAPE) {
+		glfwSetWindowShouldClose(window.get(), GLFW_TRUE);
+	}
+	if (action == GLFW_PRESS && key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
+		size_t index = key - GLFW_KEY_0;
+		if (currentScene != index && index < scenes.size()) {
+			currentScene = index;
+		}
+	}
+	if (action == GLFW_PRESS && key >= GLFW_KEY_KP_0 && key <= GLFW_KEY_KP_9) {
+		size_t index = key - GLFW_KEY_KP_0;
+		if (currentScene != index && index < scenes.size()) {
+			currentScene = index;
+		}
+	}
 }
 
 void Application::run() const {
     while (!glfwWindowShouldClose(window.get())) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (scenes.size() > 0) {
-			scenes[0].render();
-		}
+		scenes[currentScene].render();
 
         glfwSwapBuffers(window.get());
         glfwPollEvents();

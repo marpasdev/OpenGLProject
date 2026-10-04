@@ -23,14 +23,13 @@
 #include "scene.h"
 
 struct WindowDeleter {
-    void operator()(GLFWwindow* window) {
-        glfwDestroyWindow(window);
-    }
+    void operator()(GLFWwindow* window);
 };
 
 class Application {
     std::unique_ptr<GLFWwindow, WindowDeleter> window;
     std::vector<Scene> scenes;
+    size_t currentScene = 0;
     std::unordered_map<std::string, std::unique_ptr<Model>> models;
     std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
     std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
@@ -56,9 +55,13 @@ public:
 
     void createScenes();
 
+    void onKey(int key, int action);
+
     void run() const;
 
     void getVersionInfo() const;
+
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };
 
 #endif // APPLICATION_H
