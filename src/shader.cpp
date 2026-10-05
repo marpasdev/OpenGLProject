@@ -59,6 +59,6 @@ Shader::~Shader() {
     glDeleteShader(id);
 }
 
-GLuint Shader::getID() const {
-    return id;
+void Shader::attachTo(GLuint program) const {
+    glAttachShader(program, id);
 }

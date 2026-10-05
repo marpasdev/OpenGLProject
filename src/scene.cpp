@@ -12,10 +12,16 @@
 
 #include "scene.h"
 
-Scene::Scene(std::vector<DrawableObject> objects) : objects(objects) {}
+#include <utility>
+
+Scene::Scene(std::vector<std::unique_ptr<DrawableObject>> objects) : objects(std::move(objects)) {}
 
 void Scene::render() const {
-    for (const DrawableObject& o : objects) {
-        o.draw();
+    for (const auto& o : objects) {
+        o->draw();
     }
+}
+
+DrawableObject* Scene::getObject(size_t index) const {
+    return objects.at(index).get();
 }

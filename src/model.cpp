@@ -12,6 +12,7 @@
 
 #include "model.h"
 
+// TODO: remove hard coded 6 here
 Model::Model(const float* vertices, size_t size) {
     vertexCount = size / (6 * sizeof(float));
 

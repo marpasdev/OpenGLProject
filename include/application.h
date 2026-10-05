@@ -20,6 +20,8 @@
 #include <string>
 #include <memory>
 
+#include <glm/vec3.hpp>
+
 #include "scene.h"
 
 struct WindowDeleter {
@@ -33,8 +35,11 @@ class Application {
     std::unordered_map<std::string, std::unique_ptr<Model>> models;
     std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
     std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
+    glm::vec3 rotation;
 
     void initializeGLFW(int width, int height);
+
+    void processInput(float deltaTime);
 
 public:
     Application() = default;    
@@ -57,7 +62,7 @@ public:
 
     void onKey(int key, int action);
 
-    void run() const;
+    void run();
 
     void getVersionInfo() const;
 

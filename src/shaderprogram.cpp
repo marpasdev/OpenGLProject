@@ -10,15 +10,19 @@
  * @year 2026
  **/
 
+#include <glad/gl.h>
+
 #include <iostream>
+
+#include <glm/gtc/type_ptr.hpp>
 
 #include "shaderprogram.h"
 
 ShaderProgram::ShaderProgram(const Shader& vertexShader, const Shader& fragmentShader) {
     id = glCreateProgram();
 
-    glAttachShader(id, vertexShader.getID());
-    glAttachShader(id, fragmentShader.getID());
+    vertexShader.attachTo(id);
+    fragmentShader.attachTo(id);
 
     glLinkProgram(id);
 
@@ -42,8 +46,8 @@ void ShaderProgram::use() const {
     glUseProgram(id);
 }
 
-GLuint ShaderProgram::getID() const {
-    return id;
+void ShaderProgram::stopUsing() const {
+    glUseProgram(0);
 }
 
 GLint ShaderProgram::getUniform(const std::string& name) const {
@@ -88,6 +92,18 @@ void ShaderProgram::setUniform(const std::string& name, GLfloat x, GLfloat y, GL
         glUseProgram(id);
 
         glUniform4f(loc, x, y, z, w);
+
+        glUseProgram(0);
+    }
+}
+
+void ShaderProgram::setUniform(const std::string& name, const glm::mat4& m) {
+    GLint loc = getUniform(name);
+
+    if (loc != -1) {
+        glUseProgram(id);
+
+        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(m));
 
         glUseProgram(0);
     }

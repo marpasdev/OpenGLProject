@@ -14,16 +14,19 @@
 #define SCENE_H
 
 #include <vector>
+#include <memory>
 
 #include "drawableobject.h"
 
 class Scene {
-    std::vector<DrawableObject> objects;
+    std::vector<std::unique_ptr<DrawableObject>> objects;
 
 public:
-    Scene(std::vector<DrawableObject> drawableObjects);
+    Scene(std::vector<std::unique_ptr<DrawableObject>> drawableObjects);
 
     void render() const;
+
+    DrawableObject* getObject(size_t index) const;
 };
 
 #endif // SCENE_H

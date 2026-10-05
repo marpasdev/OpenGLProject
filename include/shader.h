@@ -30,7 +30,7 @@ public:
 
     Shader& operator=(const Shader& other) = delete;
 
-    GLuint getID() const;
+    void attachTo(GLuint program) const;
 };
 
 #endif // SHADER_H

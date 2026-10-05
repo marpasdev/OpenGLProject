@@ -10,6 +10,8 @@
  * @year 2026
  **/
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "drawableobject.h"
 
 DrawableObject::DrawableObject(Model* model, ShaderProgram* program, Transformation transform)
@@ -32,18 +34,12 @@ void DrawableObject::setProgram(ShaderProgram* p) {
 }
 
 void DrawableObject::draw() const {
-    glm::vec3 translation = transform.getTranslation();
-    program->setUniform("translation", translation.x, translation.y, translation.z);
+    glm::mat4 modelMatrix = transform.getScale() * transform.getRotation() * transform.getTranslation();
+    program->setUniform("modelMatrix", modelMatrix);
 
-    glm::vec3 rotation = transform.getRotation();
-    program->setUniform("rotation", rotation.x, rotation.y, rotation.z);
-
-    glm::vec3 scale = transform.getScale();
-    program->setUniform("scale", scale.x, scale.y, scale.z);
-
-    glUseProgram(program->getID());
+    program->use();
 
     model->render();
 
-    glUseProgram(0);
+    program->stopUsing();
 }

@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include <glm/mat4x4.hpp>
+
 #include "shader.h"
 
 class ShaderProgram {
@@ -35,13 +37,15 @@ public:
 
     void use() const;
 
-    GLuint getID() const;
+    void stopUsing() const;
 
     void setUniform(const std::string& name, GLfloat x) const;
 
     void setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z) const;
     
     void setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z, GLfloat w) const;
+
+    void setUniform(const std::string& name, const glm::mat4& m);
 };
 
 #endif // SHADERPROGRAM_H
