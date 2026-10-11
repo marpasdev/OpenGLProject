@@ -11,13 +11,14 @@
  **/
 
 #ifndef TRANSFORMLEAF_H
-#define TRANSFROMLEAF_H
+#define TRANSFORMLEAF_H
 
 #include <glm/mat4x4.hpp>
 
 #include "transformcomponent.h"
 
 class TransformLeaf : public TransformComponent {
+protected:
     glm::mat4 transform;
 
 public:

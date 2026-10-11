@@ -30,8 +30,15 @@
 #include "models/space/sun.h"
 #include "models/space/earth.h"
 #include "models/space/moon.h"
+
 #include "transform/transformcomposite.h"
 #include "transform/transformleaf.h"
+
+#include "transform/static/translation.h"
+#include "transform/static/rotation.h"
+#include "transform/static/scale.h"
+
+#include "transform/dynamic/dynamicrotation.h"
 
 #include "application.h"
 
@@ -93,6 +100,7 @@ void Application::createScenes() {
 	shaders["yellow"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/yellow.frag");
 	shaders["blue"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/blue.frag");
 	shaders["extendedbasic"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/extendedbasictransform.vert");
+	shaders["tree"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree.frag");
 
 	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> programs;
 	programs["basic"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders["basicFrag"]);
@@ -101,6 +109,7 @@ void Application::createScenes() {
 	programs["yellow"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("yellow"));
 	programs["blue"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("blue"));
 	programs["extendedBasic"] = std::make_shared<ShaderProgram>(*shaders.at("extendedbasic"), *shaders.at("basicFrag"));
+	programs["tree"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("tree"));
     float aspectRatio = 800.0f / 600.0f;
 
 	std::vector<VertexAttribute> layout6;
@@ -142,147 +151,146 @@ void Application::createScenes() {
 	models["moon"] = std::make_shared<Model>(moon, sizeof(moon), layout9);
     std::vector<std::unique_ptr<DrawableObject>> objects;
 
+	auto signatureTransform = std::make_shared<TransformComposite>();
+	signatureTransform->add(std::make_shared<Scale>(0.2f));
+	signatureTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, -0.9f, 0.0f)));
+
 	// Scene 0
 	auto triangleTransform = std::make_shared<TransformComposite>();
-	triangleTransform->add(std::make_shared<TransformLeaf>(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f))));
-	triangleTransform->add(std::make_shared<TransformLeaf>(glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f))));
+	// triangleTransform->add(std::make_shared<Translation>(glm::vec3(0.5f, 0.0f, 0.0f)));
+	// triangleTransform->add(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 6.0f)));
 
 	// opposite order of transformations:
-	// triangleTransform->add(std::make_shared<TransformLeaf>(glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f))));
-	// triangleTransform->add(std::make_shared<TransformLeaf>(glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.0f, 0.0f))));
+	triangleTransform->add(std::make_shared<DynamicRotation>(glm::vec3(0.5f, 0.0f, 0.0f), glm::radians(360.0f / 6.0f)));
+	triangleTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 0.5f, 0.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("triangle"),
 								programs.at("basic"),
 								triangleTransform
 								));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+									programs.at("basic"),
+									signatureTransform
+								));
 	scenes.push_back(Scene(std::move(objects)));
 
+	// Scene 1 - little sphere
+	objects.clear();
+
+	auto sphereTransform = std::make_shared<TransformComposite>();
+	sphereTransform->add(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f)));
+	sphereTransform->add(std::make_shared<DynamicRotation>(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(360.0f / 2.0f)));
+	sphereTransform->add(std::make_shared<Scale>(0.4f));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+								programs.at("basic"),
+								sphereTransform
+							));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+									programs.at("basic"),
+									signatureTransform
+								));
+	scenes.push_back(Scene(std::move(objects)));
+	
+	std::mt19937 rng{std::random_device{}()};
+
+	std::uniform_real_distribution<float> dist(-0.8f, 0.8f);
+	std::uniform_real_distribution<float> randomAngle(0.0f, 360.0f);
+	
+	// Scene 2
+	objects.clear();
+	auto plainTransform = std::make_shared<TransformComposite>();
+	plainTransform->add(std::make_shared<Rotation>(glm::vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("plain"),
+									programs.at("lightGreen"),
+									plainTransform
+									));
+	for (size_t i = 0; i < 15; ++i) {
+		auto treeTransform = std::make_shared<TransformComposite>();
+		treeTransform->add(std::make_shared<Scale>(0.06f));
+		treeTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
+		treeTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), dist(rng), 0.0f)));
+		objects.push_back(std::make_unique<DrawableObject>(models.at("tree"),
+										programs.at("tree"),
+										treeTransform
+										));
+										
+		auto bushTransform = std::make_shared<TransformComposite>();
+		bushTransform->add(std::make_shared<Scale>(0.3f));
+		bushTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
+		bushTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), dist(rng), 0.0f)));
+		objects.push_back(std::make_unique<DrawableObject>(models.at("bushes"),
+										programs.at("tree"),
+										bushTransform
+										));
+	}
+	
+	auto treeSunTransform = std::make_shared<TransformComposite>();
+	treeSunTransform->add(std::make_shared<Scale>(0.05f));
+	treeSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 0.9f, 0.0f)));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+									 programs.at("yellow"),
+									 treeSunTransform
+									 ));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+									programs.at("basic"),
+									signatureTransform
+								));
+	scenes.push_back(Scene(std::move(objects)));
+
+	// Scene 3 - Login
+	objects.clear();
 	auto loginTransform = std::make_shared<TransformComposite>();
-	loginTransform->add(std::make_shared<TransformLeaf>(glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f))));
-	loginTransform->add(std::make_shared<TransformLeaf>(glm::scale(glm::mat4(1.0f), glm::vec3(0.7f))));
+	loginTransform->add(std::make_shared<Scale>(0.7f));
+	loginTransform->add(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 12.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
 									programs.at("basic"),
 									loginTransform
 								));
 	scenes.push_back(Scene(std::move(objects)));
-
-	// Scene 1
-	objects.clear();
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("sphere").get(),
-	// 							programs.at("basic").get(),
-	// 						Transformation(
-	// 							glm::translate(glm::mat4)
-	// 							glm::vec3{0.1f}
-	// 						)));
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("login").get(),
-	// 								programs.at("basic").get(),
-	// 							Transformation(
-	// 								glm::vec3{0.8f, -0.8f, 0.0f},
-	// 								glm::vec3(0.0f, glm::radians(15.0f), 0.0f),
-	// 								glm::vec3{0.2f}
-	// 							)));
-	// scenes.push_back(Scene(std::move(objects)));
-	
-	// std::mt19937 rng{std::random_device{}()};
-
-	// std::uniform_real_distribution<float> dist(-0.8f, 0.8f);
-	// std::uniform_real_distribution<float> randomAngle(0, 360);
-	
-	// Scene 2
-	// objects.clear();
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("plain").get(),
-	// 								programs.at("lightGreen").get(),
-	// 								Transformation(
-	// 									glm::vec3{0.0f, 0.0f, 0.2f},
-	// 									glm::vec3(glm::radians(90.0f), 0.0f, 0.0f),
-	// 									glm::vec3{1.0f}
-	// 								)));
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("plain").get(),
-	// 								programs.at("blue").get(),
-	// 								Transformation(
-	// 									glm::vec3{0.0f, 1.8f, 0.1f},
-	// 									glm::vec3(glm::radians(90.0f), 0.0f, 0.0f),
-	// 									glm::vec3{1.0f}
-	// 								)));
-	// for (size_t i = 0; i < 15; ++i) {
-	// 	objects.push_back(std::make_unique<DrawableObject>(models.at("tree").get(),
-	// 									programs.at("green").get(),
-	// 									Transformation(
-	// 										glm::vec3{dist(rng), dist(rng) - 0.2f, 0.0f},
-	// 										glm::vec3(glm::radians(-30.0f), /*glm::radians(randomAngle(rng))*/0.0f, 0.0f),
-	// 										glm::vec3{0.04f}
-	// 									)));
-	// 	objects.push_back(std::make_unique<DrawableObject>(models.at("bushes").get(),
-	// 									programs.at("green").get(),
-	// 									Transformation(
-	// 										glm::vec3{dist(rng), dist(rng), 0.0f},
-	// 										glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f),
-	// 										glm::vec3{0.2f}
-	// 									)));
-	// }
-	
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("sphere").get(),
-	// 								 programs.at("yellow").get(),
-	// 								 Transformation(
-	// 									glm::vec3{0.0f, 0.9f, 0.0f},
-	// 									glm::vec3(0.0f),
-	// 									glm::vec3{0.05f}
-	// 								 )));
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("login").get(),
-	// 								programs.at("basic").get(),
-	// 							Transformation(
-	// 								glm::vec3{0.8f, -0.8f, -0.1f},
-	// 								glm::vec3(0.0f, glm::radians(15.0f), 0.0f),
-	// 								glm::vec3{0.2}
-	// 							)));
-	// scenes.push_back(Scene(std::move(objects)));
-
-	// Scene 3
-	// objects.clear();
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("login").get(),
-	// 								programs.at("basic").get(),
-	// 							Transformation(
-	// 								glm::vec3{0.0f},
-	// 								glm::vec3(0.0f, glm::radians(30.0f), 0),
-	// 								glm::vec3{0.7f}
-	// 							)));
-	// scenes.push_back(Scene(std::move(objects)));
 	
 	// Scene 4 - solar system
 	objects.clear();
 	// Sun
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("sun").get(),
-	// 		programs.at("extendedBasic").get(),
-	// 		Transformation(
-	// 			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)),
-	// 			glm::mat4(1.0f),
-	// 			glm::scale(glm::mat4(1.0f), glm::vec3(0.2f))
-	// 		)));
+	auto sunTransform = std::make_shared<TransformComposite>();
+	sunTransform->add(std::make_shared<Scale>(0.2f));
+	auto sunSpin = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 6.0f), false);
+	sunTransform->add(sunSpin);
+	objects.push_back(std::make_unique<DrawableObject>(models.at("sun"),
+			programs.at("extendedBasic"),
+			sunTransform
+			));
+
 	// // Earth
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("earth").get(),
-	// 		programs.at("extendedBasic").get(),
-	// 		Transformation(
-	// 			glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.0f)),
-	// 			glm::mat4(1.0f),
-	// 			glm::scale(glm::mat4(1.0f), glm::vec3(0.03f))
-	// 		)));
+	auto earthTransform = std::make_shared<TransformComposite>();
+	earthTransform->add(std::make_shared<Scale>(0.1f));
+	earthTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), true));
+	earthTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, 0.0f, 0.0f)));
+	auto earthOrbit = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 36.0f), false);
+	earthTransform->add(earthOrbit);
+	objects.push_back(std::make_unique<DrawableObject>(models.at("earth"),
+			programs.at("extendedBasic"),
+			earthTransform
+			));
 
-	// // Moon
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("moon").get(),
-	// 		programs.at("extendedBasic").get(),
-	// 		Transformation(
-	// 			glm::translate(glm::mat4(1.0f), glm::vec3(0.8f, 0.0f, 0.0f)),
-	// 			glm::mat4(1.0f),
-	// 			glm::scale(glm::mat4(1.0f), glm::vec3(0.02f))
-	// 		)));
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("login").get(),
-	// 		programs.at("basic").get(),
-	// 		Transformation(
-	// 			glm::translate(glm::mat4(1.0f), glm::vec3(0.8f, -0.8f, 0.0f)),
-	// 			glm::rotate(glm::mat4(1.0f), glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
-	// 			glm::scale(glm::mat4(1.0f), glm::vec3(0.2f))
-	// 		)));
+	// Moon
+	auto moonTransform = std::make_shared<TransformComposite>();
+	moonTransform->add(std::make_shared<Scale>(0.05f));
+	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), false));
+	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.15f, 0.0f, 0.0f)));
+	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), true));
+	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, 0.0f, 0.0f)));
+	moonTransform->add(earthOrbit);
 
-	// scenes.push_back(Scene(std::move(objects)));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
+			programs.at("extendedBasic"),
+			moonTransform
+			));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+									programs.at("basic"),
+									signatureTransform
+								));
+	scenes.push_back(Scene(std::move(objects)));
 
 }
 
@@ -311,37 +319,6 @@ void Application::onKey(int key, int action) {
 	}
 }
 
-void Application::processInput(float deltaTime) {
-	// float angleSpeed = glm::radians(90.0f);
-	// GLFWwindow* win = window.get();
-
-	// if (glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS) {
-	// 	rotation.y += angleSpeed * deltaTime;
-	// }
-	// if (glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-	// 	rotation.y -= angleSpeed * deltaTime;
-	// }
-	// if (glfwGetKey(win, GLFW_KEY_UP) == GLFW_PRESS) {
-	// 	rotation.x += angleSpeed * deltaTime;
-	// }
-	// if (glfwGetKey(win, GLFW_KEY_DOWN) == GLFW_PRESS) {
-	// 	rotation.x -= angleSpeed * deltaTime;
-	// }
-
-	// if (rotation.y < 0.0f) {
-	// 	rotation.y += glm::radians(360.0f);
-	// }
-	// if (rotation.x < 0.0f) {
-	// 	rotation.x += glm::radians(360.0f);
-	// }
-	// if (rotation.y >= glm::radians(360.0f)) {
-	// 	rotation.y = 0.0f;
-	// }
-	// if (rotation.x >= glm::radians(360.0f)) {
-	// 	rotation.x = 0.0f;
-	// }
-}
-
 void Application::run() {
 	double previousTime = glfwGetTime();
 
@@ -350,14 +327,9 @@ void Application::run() {
 		float deltaTime = static_cast<float>(now - previousTime);
 		previousTime = now;
 
-		processInput(deltaTime);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// scenes.at(3).getObject(0)->setTransform(Transformation(glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f}),
-		// 										glm::rotate(glm::mat4{1.0f}, ),
-		// 										glm::scale(glm::mat4{1.0f}, glm::vec3{0.7f})));
-
+		scenes[currentScene].update(deltaTime);
 		scenes[currentScene].render();
 
         glfwSwapBuffers(window.get());

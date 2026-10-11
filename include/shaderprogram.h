@@ -45,7 +45,7 @@ public:
     
     void setUniform(const std::string& name, const glm::vec4& v) const;
 
-    void setUniform(const std::string& name, const glm::mat4& m);
+    void setUniform(const std::string& name, const glm::mat4& m) const;
 };
 
 #endif // SHADERPROGRAM_H

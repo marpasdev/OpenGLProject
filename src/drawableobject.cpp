@@ -34,6 +34,10 @@ void DrawableObject::setProgram(std::shared_ptr<ShaderProgram> p) {
     program = p;
 }
 
+void DrawableObject::update(float deltaTime) {
+    transform->update(deltaTime);
+}
+
 void DrawableObject::draw() const {
     glm::mat4 modelMatrix = transform->getMatrix();
     program->setUniform("modelMatrix", modelMatrix);

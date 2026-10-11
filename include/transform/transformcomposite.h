@@ -24,6 +24,7 @@ class TransformComposite : public TransformComponent {
 public:
     void add(std::shared_ptr<TransformComponent> transform);
     glm::mat4 getMatrix() const override;
+    void update(float deltaTime) override;
 };
 
 #endif // TRANSFORMCOMPOSITE_H 

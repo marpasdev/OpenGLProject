@@ -20,6 +20,7 @@ class TransformComponent {
 public:
     virtual ~TransformComponent() = default;
     virtual glm::mat4 getMatrix() const = 0;
+    virtual void update(float /*deltaTime*/) {};
 };
 
 #endif // TRANSFORMCOMPONENT_H

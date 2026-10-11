@@ -97,7 +97,7 @@ void ShaderProgram::setUniform(const std::string& name, const glm::vec4& v) cons
     }
 }
 
-void ShaderProgram::setUniform(const std::string& name, const glm::mat4& m) {
+void ShaderProgram::setUniform(const std::string& name, const glm::mat4& m) const {
     GLint loc = getUniform(name);
 
     if (loc != -1) {

@@ -35,6 +35,8 @@ public:
 
     void setProgram(std::shared_ptr<ShaderProgram> p);
 
+    void update(float deltaTime);
+
     void draw() const;
 };
 

@@ -26,3 +26,9 @@ glm::mat4 TransformComposite::getMatrix() const {
 
     return transform;
 }
+
+void TransformComposite::update(float deltaTime) {
+    for (auto transform : transforms) {
+        transform->update(deltaTime);
+    }
+}

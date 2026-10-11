@@ -24,6 +24,8 @@ class Scene {
 public:
     Scene(std::vector<std::unique_ptr<DrawableObject>> drawableObjects);
 
+    void update(float deltaTime);
+
     void render() const;
 
     DrawableObject* getObject(size_t index) const;
