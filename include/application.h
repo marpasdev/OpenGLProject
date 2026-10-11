@@ -32,10 +32,6 @@ class Application {
     std::unique_ptr<GLFWwindow, WindowDeleter> window;
     std::vector<Scene> scenes;
     size_t currentScene = 0;
-    std::unordered_map<std::string, std::unique_ptr<Model>> models;
-    std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
-    std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
-    glm::vec3 rotation;
 
     void initializeGLFW(int width, int height);
 
@@ -51,12 +47,6 @@ public:
     Application& operator=(const Application& other) = delete;
 
     void initialize(int windowWidth, int windowHeight);
-
-    void createShaders();
-
-    void createModels();
-
-    void createPrograms();
 
     void createScenes();
 

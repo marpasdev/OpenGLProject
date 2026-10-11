@@ -15,6 +15,12 @@
 
 #include <glad/gl.h>
 #include <cstddef>
+#include <vector>
+
+struct VertexAttribute {
+    GLint componentCount;
+    GLenum type;
+};
 
 class Model {
     GLuint vbo = 0;
@@ -22,7 +28,7 @@ class Model {
     size_t vertexCount = 0;
 
 public:
-    Model(const float* vertices, size_t size);
+    Model(const float* vertices, size_t size, const std::vector<VertexAttribute>& attributes);
 
     Model(const Model& other) = delete;
     

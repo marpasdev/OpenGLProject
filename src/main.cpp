@@ -24,10 +24,6 @@ int main() {
 
     app->initialize(1200, 1200);
 
-    app->createShaders();
-    app->createModels();
-    app->createPrograms();
-
     app->createScenes();
 
     app->run();

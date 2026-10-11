@@ -22,7 +22,8 @@ add_executable(OpenGLProject
     src/main.cpp
     src/shader.cpp
     src/shaderprogram.cpp
-    src/transformation.cpp
+    src/transform/transformcomposite.cpp
+    src/transform/transformleaf.cpp
     src/model.cpp
     src/drawableobject.cpp
     src/scene.cpp

@@ -14,27 +14,28 @@
 
 #include "drawableobject.h"
 
-DrawableObject::DrawableObject(Model* model, ShaderProgram* program, Transformation transform)
-    : model(model), program(program), transform(transform) {}
+DrawableObject::DrawableObject(std::shared_ptr<Model> model, std::shared_ptr<ShaderProgram> program,
+    std::shared_ptr<TransformComponent> transform)
+    : model(std::move(model)), program(std::move(program)), transform(std::move(transform)) {}
 
-Transformation DrawableObject::getTransform() const {
+std::shared_ptr<TransformComponent> DrawableObject::getTransform() const {
     return transform;
 }
 
-void DrawableObject::setTransform(const Transformation& t) {
+void DrawableObject::setTransform(std::shared_ptr<TransformComponent> t) {
     transform = t;
 }
 
-ShaderProgram* DrawableObject::getProgram() const {
+std::shared_ptr<ShaderProgram> DrawableObject::getProgram() const {
     return program;
 }
 
-void DrawableObject::setProgram(ShaderProgram* p) {
+void DrawableObject::setProgram(std::shared_ptr<ShaderProgram> p) {
     program = p;
 }
 
 void DrawableObject::draw() const {
-    glm::mat4 modelMatrix = transform.getScale() * transform.getRotation() * transform.getTranslation();
+    glm::mat4 modelMatrix = transform->getMatrix();
     program->setUniform("modelMatrix", modelMatrix);
 
     program->use();

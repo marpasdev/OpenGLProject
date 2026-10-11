@@ -73,25 +73,25 @@ void ShaderProgram::setUniform(const std::string& name, GLfloat x) const {
     }
 }
 
-void ShaderProgram::setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z) const {
+void ShaderProgram::setUniform(const std::string& name, const glm::vec3& v) const {
     GLint loc = getUniform(name);
 
     if (loc != -1) {
         glUseProgram(id);
 
-        glUniform3f(loc, x, y, z);
+        glUniform3f(loc, v.x, v.y, v.z);
 
         glUseProgram(0);
     }
 }
 
-void ShaderProgram::setUniform(const std::string& name, GLfloat x, GLfloat y, GLfloat z, GLfloat w) const {
+void ShaderProgram::setUniform(const std::string& name, const glm::vec4& v) const {
     GLint loc = getUniform(name);
     
     if (loc != -1) {
         glUseProgram(id);
 
-        glUniform4f(loc, x, y, z, w);
+        glUniform4f(loc, v.x, v.y, v.z, v.w);
 
         glUseProgram(0);
     }

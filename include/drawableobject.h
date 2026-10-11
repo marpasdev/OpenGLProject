@@ -15,24 +15,25 @@
 
 #include "model.h"
 #include "shaderprogram.h"
-#include "transformation.h"
+#include "transform/transformcomponent.h"
+#include <memory>
 
 class DrawableObject {
-    Model* model;
-    ShaderProgram* program;
-    Transformation transform;
+    std::shared_ptr<Model> model;
+    std::shared_ptr<ShaderProgram> program;
+    std::shared_ptr<TransformComponent> transform;
 
 public:
-    DrawableObject(Model* model, ShaderProgram* program,
-        Transformation transform = Transformation());
+    DrawableObject(std::shared_ptr<Model> model, std::shared_ptr<ShaderProgram> program,
+        std::shared_ptr<TransformComponent> transform);
 
-    Transformation getTransform() const;
+    std::shared_ptr<TransformComponent> getTransform() const;
 
-    void setTransform(const Transformation& t);
+    void setTransform(std::shared_ptr<TransformComponent> t);
 
-    ShaderProgram* getProgram() const;
+    std::shared_ptr<ShaderProgram> getProgram() const;
 
-    void setProgram(ShaderProgram* p);
+    void setProgram(std::shared_ptr<ShaderProgram> p);
 
     void draw() const;
 };
