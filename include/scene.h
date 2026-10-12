@@ -17,9 +17,11 @@
 #include <memory>
 
 #include "drawableobject.h"
+#include "camera.h"
 
 class Scene {
     std::vector<std::unique_ptr<DrawableObject>> objects;
+    std::shared_ptr<Camera> camera;
 
 public:
     Scene(std::vector<std::unique_ptr<DrawableObject>> drawableObjects);
@@ -29,6 +31,9 @@ public:
     void render() const;
 
     DrawableObject* getObject(size_t index) const;
+
+    Camera* getCamera() const;
+    void setCamera(std::shared_ptr<Camera> newCamera);
 };
 
 #endif // SCENE_H

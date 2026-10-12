@@ -32,6 +32,7 @@ add_executable(OpenGLProject
     src/drawableobject.cpp
     src/scene.cpp
     src/application.cpp
+    src/camera.cpp
 )
 
 target_include_directories(OpenGLProject

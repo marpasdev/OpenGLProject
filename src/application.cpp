@@ -193,22 +193,23 @@ void Application::createScenes() {
 	
 	std::mt19937 rng{std::random_device{}()};
 
-	std::uniform_real_distribution<float> dist(-0.8f, 0.8f);
+	std::uniform_real_distribution<float> dist(-2.0f, 2.0f);
 	std::uniform_real_distribution<float> randomAngle(0.0f, 360.0f);
 	
 	// Scene 2
 	objects.clear();
 	auto plainTransform = std::make_shared<TransformComposite>();
-	plainTransform->add(std::make_shared<Rotation>(glm::vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
+	plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
+	// plainTransform->add(std::make_shared<Rotation>(glm::vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("plain"),
 									programs.at("lightGreen"),
 									plainTransform
 									));
-	for (size_t i = 0; i < 15; ++i) {
+	for (size_t i = 0; i < 74; ++i) {
 		auto treeTransform = std::make_shared<TransformComposite>();
 		treeTransform->add(std::make_shared<Scale>(0.06f));
 		treeTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
-		treeTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), dist(rng), 0.0f)));
+		treeTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), 0.0f, dist(rng))));
 		objects.push_back(std::make_unique<DrawableObject>(models.at("tree"),
 										programs.at("tree"),
 										treeTransform
@@ -217,16 +218,22 @@ void Application::createScenes() {
 		auto bushTransform = std::make_shared<TransformComposite>();
 		bushTransform->add(std::make_shared<Scale>(0.3f));
 		bushTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
-		bushTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), dist(rng), 0.0f)));
+		bushTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), 0.0f, dist(rng))));
 		objects.push_back(std::make_unique<DrawableObject>(models.at("bushes"),
 										programs.at("tree"),
 										bushTransform
 										));
 	}
+	auto skyTransform = std::make_shared<TransformComposite>();
+	skyTransform->add(std::make_shared<Scale>(10.0f));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+										programs.at("blue"),
+										skyTransform
+									));
 	
 	auto treeSunTransform = std::make_shared<TransformComposite>();
 	treeSunTransform->add(std::make_shared<Scale>(0.05f));
-	treeSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 0.9f, 0.0f)));
+	treeSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 2.0f, 0.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
 									 programs.at("yellow"),
 									 treeSunTransform
@@ -276,7 +283,7 @@ void Application::createScenes() {
 	auto moonTransform = std::make_shared<TransformComposite>();
 	moonTransform->add(std::make_shared<Scale>(0.05f));
 	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), false));
-	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.15f, 0.0f, 0.0f)));
+	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.2f, 0.0f, 0.0f)));
 	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), true));
 	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, 0.0f, 0.0f)));
 	moonTransform->add(earthOrbit);
@@ -291,6 +298,14 @@ void Application::createScenes() {
 									signatureTransform
 								));
 	scenes.push_back(Scene(std::move(objects)));
+
+	glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 100.0f);
+
+	cam = std::make_shared<Camera>(view, projection);
+	for (auto& s : scenes) {
+		s.setCamera(cam);
+	}
 
 }
 
@@ -317,10 +332,13 @@ void Application::onKey(int key, int action) {
 			currentScene = index;
 		}
 	}
+	// if (action == GLFW_PRESS && key == GLFW_KEY_W) {
+	// }
 }
 
 void Application::run() {
 	double previousTime = glfwGetTime();
+
 
     while (!glfwWindowShouldClose(window.get())) {
 		double now = glfwGetTime();

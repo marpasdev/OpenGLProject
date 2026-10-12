@@ -24,6 +24,8 @@
 
 #include "scene.h"
 
+#include "camera.h" // to be removed
+
 struct WindowDeleter {
     void operator()(GLFWwindow* window);
 };
@@ -32,6 +34,7 @@ class Application {
     std::unique_ptr<GLFWwindow, WindowDeleter> window;
     std::vector<Scene> scenes;
     size_t currentScene = 0;
+    std::shared_ptr<Camera> cam;        // TODO: testing, to be moved from application class
 
     void initializeGLFW(int width, int height);
 
