@@ -105,6 +105,7 @@ void Application::createScenes() {
 	shaders["treeVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/tree.vert");
 	shaders["treeFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree.frag");
 	shaders["bushVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/bush.vert");
+	shaders["skyVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/sky.vert");
 
 	shaders["clockVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/clock.vert");
 	shaders["clockFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/clock.frag");
@@ -119,6 +120,7 @@ void Application::createScenes() {
 	programs["tree"] = std::make_shared<ShaderProgram>(*shaders.at("treeVert"), *shaders.at("treeFrag"));
 	programs["bush"] = std::make_shared<ShaderProgram>(*shaders.at("bushVert"), *shaders.at("treeFrag"));
 	programs["clock"] = std::make_shared<ShaderProgram>(*shaders.at("clockVert"), *shaders.at("clockFrag"));
+	programs["sky"] = std::make_shared<ShaderProgram>(*shaders.at("skyVert"), *shaders.at("basicFrag"));
 
 	std::vector<VertexAttribute> layout6;
 	layout6.push_back({3, GL_FLOAT});
@@ -211,6 +213,31 @@ void Application::createScenes() {
 	
 	// Scene 2
 	objects.clear();
+	auto skyTransform = std::make_shared<TransformComposite>();
+
+	glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
+	glm::vec3 nightColor{0.01f, 0.01f, 0.06f};
+
+	float tm = glfwGetTime();
+	float cycleDuration = 600.0f;		// duration of day-night cycle in seconds
+	float cycle = fmod(tm, cycleDuration) / cycleDuration;
+	float cycleAngle = cycle * 360.0f;
+	float anglePerSecond = 360.0f / cycleDuration;
+
+	float daylight = (1.0f - cos(glm::radians(cycleAngle))) / 2.0f;
+
+	glm::vec3 skyColor = glm::mix(nightColor, dayColor, daylight);
+
+	skyTransform->add(std::make_shared<Scale>(50.0f));
+	auto sky = std::make_unique<DrawableObject>(models.at("sphere"),
+										programs.at("sky"),
+										skyTransform
+									);
+
+	sky->setUniform("shade", skyColor);
+
+	objects.push_back(std::move(sky));
+
 	auto plainTransform = std::make_shared<TransformComposite>();
 	plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("plain"),
@@ -240,17 +267,13 @@ void Application::createScenes() {
 										bushTransform
 										));
 	}
-	// auto skyTransform = std::make_shared<TransformComposite>();
-	// skyTransform->add(std::make_shared<Scale>(10.0f));
-	// objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
-	// 									programs.at("blue"),
-	// 									skyTransform
-	// 								));
+
+
 	
 	auto forestSunTransform = std::make_shared<TransformComposite>();
 	forestSunTransform->add(std::make_shared<Scale>(1.0f));
 	forestSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, -12.0f, 12.0f)));
-	forestSunTransform->add(std::make_shared<DynamicRotation>(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(360.0f / 8.0f)));
+	forestSunTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), -1.0f));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
 									 programs.at("yellow"),
 									 forestSunTransform
@@ -258,7 +281,7 @@ void Application::createScenes() {
 	auto forestMoonTransform = std::make_shared<TransformComposite>();
 	forestMoonTransform->add(std::make_shared<Scale>(1.0f));
 	forestMoonTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 12.0f, -12.0f)));
-	forestMoonTransform->add(std::make_shared<DynamicRotation>(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(360.0f / 8.0f)));
+	forestMoonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), 1.0f));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
 									 programs.at("extendedBasic"),
 									 forestMoonTransform
@@ -292,7 +315,7 @@ void Application::createScenes() {
 			sunTransform
 			));
 
-	// // Earth
+	// Earth
 	auto earthTransform = std::make_shared<TransformComposite>();
 	earthTransform->add(std::make_shared<Scale>(0.1f));
 	earthTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), true));
@@ -326,7 +349,7 @@ void Application::createScenes() {
 
 	objects.clear();
 
-	// Clock Scene
+	// Scene 5 - Clock
 	auto clockTransform = std::make_shared<TransformComposite>();
 	auto clockObject = std::make_unique<DrawableObject>(models.at("clock"),
 								programs.at("clock"),
@@ -408,6 +431,20 @@ void Application::run() {
 	scenes[5].getObject(0)->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	scenes[5].getObject(0)->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 
+	glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
+	glm::vec3 nightColor{0.01f, 0.01f, 0.06f};
+
+	float tm = glfwGetTime();
+	float cycleDuration = 600.0f;		// duration of day-night cycle in seconds
+	float cycle = fmod(tm, cycleDuration) / cycleDuration;
+	float cycleAngle = cycle * 360.0f;
+
+	float daylight = (1.0f - cos(glm::radians(cycleAngle))) / 2.0f;
+
+	glm::vec3 skyColor = glm::mix(nightColor, dayColor, daylight);
+
+	scenes[2].getObject(0)->setUniform("shade", skyColor);
+
 		// handle input
 	if (glfwGetKey(window.get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 		bool run = true;
@@ -437,6 +474,20 @@ void Application::run() {
 		for (auto& s : scenes) {
 			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
 			cam->moveRight((run ? runMultiplier : 1.0f) * speed * deltaTime);
+			s.setCamera(cam);
+		}
+	}
+	if (glfwGetKey(window.get(), GLFW_KEY_SPACE) == GLFW_PRESS) {
+		for (auto& s : scenes) {
+			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
+			cam->moveUp((run ? runMultiplier : 1.0f) * speed * deltaTime);
+			s.setCamera(cam);
+		}
+	}
+	if (glfwGetKey(window.get(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+		for (auto& s : scenes) {
+			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
+			cam->moveDown((run ? runMultiplier : 1.0f) * speed * deltaTime);
 			s.setCamera(cam);
 		}
 	}

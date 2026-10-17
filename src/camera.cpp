@@ -53,23 +53,29 @@ void Camera::moveBackward(float value) {
 }
 
 void Camera::moveRight(float value) {
-    center += glm::vec3(value * 1.0f, 0.0f, 0.0f);
-    eye += glm::vec3(1.0f * value, 0.0f, 0.0f);
+    center += glm::vec3(value * -1.0f, 0.0f, 0.0f);
+    eye += glm::vec3(-1.0f * value, 0.0f, 0.0f);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
 }
 
 void Camera::moveLeft(float value) {
-    center -= glm::vec3(1.0f * value, 0.0f, 0.0f);
-    eye -= glm::vec3(1.0f * value, 0.0f, 0.0f);
+    center -= glm::vec3(-1.0f * value, 0.0f, 0.0f);
+    eye -= glm::vec3(-1.0f * value, 0.0f, 0.0f);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
 }
 
 void Camera::moveUp(float value) {
-
+    center += glm::vec3(0.0f, 1.0f * value, 0.0f);
+    eye += glm::vec3(0.0f, 1.0f * value, 0.0f);
+    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
 }
 
 void Camera::moveDown(float value) {
-
+    center -= glm::vec3(0.0f, value * 1.0f, 0.0f);
+    eye -= glm::vec3(0.0f, value * 1.0f, 0.0f);
+    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
 }
