@@ -20,6 +20,9 @@
 #include <string>
 #include <memory>
 
+#include <ctime>
+#include <chrono>
+
 #include <glm/vec3.hpp>
 
 #include "scene.h"
@@ -39,6 +42,8 @@ class Application {
     void initializeGLFW(int width, int height);
 
     void processInput(float deltaTime);
+
+    glm::ivec3 getTimeHMS() const;
 
 public:
     Application() = default;    

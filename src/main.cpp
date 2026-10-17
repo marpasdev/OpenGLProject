@@ -22,7 +22,7 @@
 int main() {
     auto app = std::make_unique<Application>();
 
-    app->initialize(1200, 1200);
+    app->initialize(900, 900);
 
     app->createScenes();
 

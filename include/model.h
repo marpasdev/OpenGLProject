@@ -1,5 +1,5 @@
 /**
- * @file mesh.h
+ * @file model.h
  *
  * @brief Declaration of the Model class, which is a wrapper over VAO and VBO.
  *

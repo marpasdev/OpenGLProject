@@ -12,7 +12,7 @@
 
 #include <glad/gl.h>
 
-#include <cstdlib>
+// #include <cstdlib>
 #include <cstdio>
 #include <iostream>
 #include <random>
@@ -30,6 +30,8 @@
 #include "models/space/sun.h"
 #include "models/space/earth.h"
 #include "models/space/moon.h"
+
+#include "models/clock.h"
 
 #include "transform/transformcomposite.h"
 #include "transform/transformleaf.h"
@@ -100,7 +102,12 @@ void Application::createScenes() {
 	shaders["yellow"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/yellow.frag");
 	shaders["blue"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/blue.frag");
 	shaders["extendedbasic"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/extendedbasictransform.vert");
-	shaders["tree"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree.frag");
+	shaders["treeVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/tree.vert");
+	shaders["treeFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree.frag");
+	shaders["bushVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/bush.vert");
+
+	shaders["clockVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/clock.vert");
+	shaders["clockFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/clock.frag");
 
 	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> programs;
 	programs["basic"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders["basicFrag"]);
@@ -109,8 +116,9 @@ void Application::createScenes() {
 	programs["yellow"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("yellow"));
 	programs["blue"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("blue"));
 	programs["extendedBasic"] = std::make_shared<ShaderProgram>(*shaders.at("extendedbasic"), *shaders.at("basicFrag"));
-	programs["tree"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("tree"));
-    float aspectRatio = 800.0f / 600.0f;
+	programs["tree"] = std::make_shared<ShaderProgram>(*shaders.at("treeVert"), *shaders.at("treeFrag"));
+	programs["bush"] = std::make_shared<ShaderProgram>(*shaders.at("bushVert"), *shaders.at("treeFrag"));
+	programs["clock"] = std::make_shared<ShaderProgram>(*shaders.at("clockVert"), *shaders.at("clockFrag"));
 
 	std::vector<VertexAttribute> layout6;
 	layout6.push_back({3, GL_FLOAT});
@@ -131,12 +139,12 @@ void Application::createScenes() {
     models["triangle"] = std::make_shared<Model>(points, sizeof(points), layout6);
 
     float square[] = {
-        -0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.5f, -aspectRatio * 0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, -aspectRatio * 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-        -0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.5f, aspectRatio * -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, aspectRatio * 0.5f, 0.0f, 1.0f, 1.0f, 0.0f
+        -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f
     };
 	models["square"] = std::make_shared<Model>(square, sizeof(square), layout6);
 	models["sphere"] = std::make_shared<Model>(sphere, sizeof(sphere), layout6);
@@ -149,11 +157,14 @@ void Application::createScenes() {
 	models["sun"] = std::make_shared<Model>(sun, sizeof(sun), layout9);
 	models["earth"] = std::make_shared<Model>(earth, sizeof(earth), layout9);
 	models["moon"] = std::make_shared<Model>(moon, sizeof(moon), layout9);
+
+	models["clock"] = std::make_shared<Model>(clockModel, sizeof(clockModel), layout9);
+
     std::vector<std::unique_ptr<DrawableObject>> objects;
 
 	auto signatureTransform = std::make_shared<TransformComposite>();
 	signatureTransform->add(std::make_shared<Scale>(0.2f));
-	signatureTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, -0.9f, 0.0f)));
+	signatureTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, 0.9f, 0.0f)));
 
 	// Scene 0
 	auto triangleTransform = std::make_shared<TransformComposite>();
@@ -195,48 +206,62 @@ void Application::createScenes() {
 
 	std::uniform_real_distribution<float> dist(-2.0f, 2.0f);
 	std::uniform_real_distribution<float> randomAngle(0.0f, 360.0f);
+	std::uniform_real_distribution<float> randomShade(0.0f, 0.3f);
+	std::uniform_real_distribution<float> randomScale(0.7f, 1.0f);
 	
 	// Scene 2
 	objects.clear();
 	auto plainTransform = std::make_shared<TransformComposite>();
 	plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
-	// plainTransform->add(std::make_shared<Rotation>(glm::vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("plain"),
 									programs.at("lightGreen"),
 									plainTransform
 									));
 	for (size_t i = 0; i < 74; ++i) {
 		auto treeTransform = std::make_shared<TransformComposite>();
-		treeTransform->add(std::make_shared<Scale>(0.06f));
+		treeTransform->add(std::make_shared<Scale>(0.06f * randomScale(rng)));
 		treeTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
 		treeTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), 0.0f, dist(rng))));
-		objects.push_back(std::make_unique<DrawableObject>(models.at("tree"),
+
+		auto tree = std::make_unique<DrawableObject>(models.at("tree"),
 										programs.at("tree"),
 										treeTransform
-										));
-										
+										);
+		tree->setUniform("shade", randomShade(rng));
+		objects.push_back(std::move(tree));									
+	}
+	for (size_t i = 0; i < 250; ++i) {
 		auto bushTransform = std::make_shared<TransformComposite>();
-		bushTransform->add(std::make_shared<Scale>(0.3f));
+		bushTransform->add(std::make_shared<Scale>(0.2f));
 		bushTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
 		bushTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), 0.0f, dist(rng))));
 		objects.push_back(std::make_unique<DrawableObject>(models.at("bushes"),
-										programs.at("tree"),
+										programs.at("bush"),
 										bushTransform
 										));
 	}
-	auto skyTransform = std::make_shared<TransformComposite>();
-	skyTransform->add(std::make_shared<Scale>(10.0f));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
-										programs.at("blue"),
-										skyTransform
-									));
+	// auto skyTransform = std::make_shared<TransformComposite>();
+	// skyTransform->add(std::make_shared<Scale>(10.0f));
+	// objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+	// 									programs.at("blue"),
+	// 									skyTransform
+	// 								));
 	
-	auto treeSunTransform = std::make_shared<TransformComposite>();
-	treeSunTransform->add(std::make_shared<Scale>(0.05f));
-	treeSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 2.0f, 0.0f)));
+	auto forestSunTransform = std::make_shared<TransformComposite>();
+	forestSunTransform->add(std::make_shared<Scale>(1.0f));
+	forestSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, -12.0f, 12.0f)));
+	forestSunTransform->add(std::make_shared<DynamicRotation>(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(360.0f / 8.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
 									 programs.at("yellow"),
-									 treeSunTransform
+									 forestSunTransform
+									 ));
+	auto forestMoonTransform = std::make_shared<TransformComposite>();
+	forestMoonTransform->add(std::make_shared<Scale>(1.0f));
+	forestMoonTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 12.0f, -12.0f)));
+	forestMoonTransform->add(std::make_shared<DynamicRotation>(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(360.0f / 8.0f)));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
+									 programs.at("extendedBasic"),
+									 forestMoonTransform
 									 ));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
 									programs.at("basic"),
@@ -299,14 +324,39 @@ void Application::createScenes() {
 								));
 	scenes.push_back(Scene(std::move(objects)));
 
-	glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 100.0f);
+	objects.clear();
 
-	cam = std::make_shared<Camera>(view, projection);
+	// Clock Scene
+	auto clockTransform = std::make_shared<TransformComposite>();
+	auto clockObject = std::make_unique<DrawableObject>(models.at("clock"),
+								programs.at("clock"),
+								clockTransform);
+
+	glm::ivec3 t = getTimeHMS();
+
+	float secAngle = glm::radians(-static_cast<float>(t.z % 60 * 6));
+	float minAngle = glm::radians(-static_cast<float>(t.y % 60 * 6) + glm::degrees(secAngle) / 60.0f);
+	float hourAngle = glm::radians(-static_cast<float>(t.x % 12 * 30) + glm::degrees(minAngle) / 12.0f);
+
+	clockObject->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	clockObject->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	clockObject->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	// clockObject->setTransform(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 6.0f)));
+
+	objects.push_back(std::move(clockObject));						
+	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+									programs.at("basic"),
+									signatureTransform
+								));
+
+	scenes.push_back(Scene(std::move(objects)));
+
+	glm::vec3 pos(0.0f, 0.1f, 0.0f);
+
+	cam = std::make_shared<Camera>(pos);
 	for (auto& s : scenes) {
 		s.setCamera(cam);
 	}
-
 }
 
 void Application::keyCallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {
@@ -332,18 +382,66 @@ void Application::onKey(int key, int action) {
 			currentScene = index;
 		}
 	}
-	// if (action == GLFW_PRESS && key == GLFW_KEY_W) {
-	// }
 }
 
 void Application::run() {
 	double previousTime = glfwGetTime();
+
+	float speed = 0.5f;
+	bool run = false;
+	bool runMultiplier = 2.0f;
 
 
     while (!glfwWindowShouldClose(window.get())) {
 		double now = glfwGetTime();
 		float deltaTime = static_cast<float>(now - previousTime);
 		previousTime = now;
+
+
+	glm::ivec3 t = getTimeHMS();
+
+	float secAngle = glm::radians(-static_cast<float>(t.z % 60 * 6));
+	float minAngle = glm::radians(-static_cast<float>(t.y % 60 * 6) + glm::degrees(secAngle) / 60.0f);
+	float hourAngle = glm::radians(-static_cast<float>(t.x % 12 * 30) + glm::degrees(minAngle) / 12.0f);
+
+	scenes[5].getObject(0)->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	scenes[5].getObject(0)->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	scenes[5].getObject(0)->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+
+		// handle input
+	if (glfwGetKey(window.get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		bool run = true;
+	}
+	if (glfwGetKey(window.get(), GLFW_KEY_W) == GLFW_PRESS) {
+		for (auto& s : scenes) {
+			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
+			cam->moveForward((run ? runMultiplier : 1.0f) * speed * deltaTime);
+			s.setCamera(cam);
+		}
+	}
+	if (glfwGetKey(window.get(), GLFW_KEY_S) == GLFW_PRESS) {
+		for (auto& s : scenes) {
+			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
+			cam->moveBackward((run ? runMultiplier : 1.0f) * speed * deltaTime);
+			s.setCamera(cam);
+		}
+	}
+	if (glfwGetKey(window.get(), GLFW_KEY_A) == GLFW_PRESS) {
+		for (auto& s : scenes) {
+			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
+			cam->moveLeft((run ? runMultiplier : 1.0f) * speed * deltaTime);
+			s.setCamera(cam);
+		}
+	}
+	if (glfwGetKey(window.get(), GLFW_KEY_D) == GLFW_PRESS) {
+		for (auto& s : scenes) {
+			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
+			cam->moveRight((run ? runMultiplier : 1.0f) * speed * deltaTime);
+			s.setCamera(cam);
+		}
+	}
+
+	run = false;
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -363,4 +461,16 @@ void Application::getVersionInfo() const {
 	int major, minor, revision;
 	glfwGetVersion(&major, &minor, &revision);
 	printf("Using GLFW %i.%i.%i\n", major, minor, revision);
+}
+
+
+glm::ivec3 Application::getTimeHMS() const {
+	std::time_t t = std::time(nullptr);
+	std::tm local{};
+#ifdef _WIN32
+	localtime_s(&local, &t);
+#else
+	localtime_r(&t, &local);
+#endif
+	return glm::ivec3(local.tm_hour, local.tm_min, local.tm_sec);
 }

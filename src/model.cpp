@@ -1,5 +1,5 @@
 /**
- * @file mesh.cpp
+ * @file model.cpp
  *
  * @brief A wrapper over VAO and VBO.
  *

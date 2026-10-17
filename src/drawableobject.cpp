@@ -34,6 +34,19 @@ void DrawableObject::setProgram(std::shared_ptr<ShaderProgram> p) {
     program = p;
 }
 
+void DrawableObject::setUniform(const std::string& name, const UniformValue& value) {
+    uniforms[name] = value;
+}
+
+void DrawableObject::setUniforms() const {
+    for (const auto& [name, value] : uniforms) {
+        std::visit(
+            [&](const auto& value) {
+            program->setUniform(name, value);
+        }, value);
+    }
+}
+
 void DrawableObject::update(float deltaTime) {
     transform->update(deltaTime);
 }
@@ -41,6 +54,8 @@ void DrawableObject::update(float deltaTime) {
 void DrawableObject::draw() const {
     glm::mat4 modelMatrix = transform->getMatrix();
     program->setUniform("modelMatrix", modelMatrix);
+
+    setUniforms();
 
     program->use();
 
