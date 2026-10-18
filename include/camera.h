@@ -14,6 +14,7 @@
 #define CAMERA_H
 
 #include <glm/mat4x4.hpp>
+#include <glm/trigonometric.hpp>
 #include <vector>
 
 class CameraObserver;
@@ -23,11 +24,17 @@ class Camera {
     glm::mat4 projection;
 
     glm::vec3 eye;
-    glm::vec3 center;
+    glm::vec3 front;
+    glm::vec3 up{0.0f, 1.0f, 0.0f};
+
+    float yaw = glm::radians(90.0f);
+    float pitch = 0.0f;
 
     std::vector<CameraObserver*> observers;
 
     void notify() const;
+
+    void updateView();
 
 public:
     Camera(const glm::vec3& eye);
@@ -41,6 +48,8 @@ public:
 
     void attach(CameraObserver* o);
     void detach(CameraObserver* o);
+
+    void rotate(float deltaYaw, float deltaPitch);
 
     void moveForward(float value);
     void moveBackward(float value);

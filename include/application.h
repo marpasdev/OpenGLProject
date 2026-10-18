@@ -39,6 +39,11 @@ class Application {
     std::vector<Scene> scenes;
     size_t currentScene = 0;
 
+    bool rotating = false;
+    double lastX = 0;
+    double lastY = 0;
+    float mouseSensitivity = glm::radians(0.2f);
+
     void initializeGLFW(int width, int height);
 
     void processInput(float deltaTime);
@@ -58,13 +63,21 @@ public:
 
     void createScenes();
 
-    void onKey(int key, int action);
-
     void run();
 
     void getVersionInfo() const;
 
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    void onKey(int key, int action);
+
+    static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+    void onResize(int width, int height);
+
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    void onMouseButton(int button, int action);
+
+    static void cursorPosCallback(GLFWwindow* window, double x, double y);
+    void onMouseMove(double x, double y);
 };
 
 #endif // APPLICATION_H

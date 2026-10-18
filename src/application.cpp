@@ -12,7 +12,6 @@
 
 #include <glad/gl.h>
 
-// #include <cstdlib>
 #include <cstdio>
 #include <iostream>
 #include <random>
@@ -75,12 +74,17 @@ void Application::initializeGLFW(int width, int height) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
+
+	// onResize(width, height);
 	
 	glfwMakeContextCurrent(window.get());
 	glfwSwapInterval(1);
 
 	glfwSetWindowUserPointer(window.get(), this);
 	glfwSetKeyCallback(window.get(), keyCallback);
+	glfwSetFramebufferSizeCallback(window.get(), framebufferSizeCallback);
+	glfwSetCursorPosCallback(window.get(), cursorPosCallback);
+	glfwSetMouseButtonCallback(window.get(), mouseButtonCallback);
 }
 
 void Application::initialize(int windowWidth, int windowHeight) {
@@ -242,6 +246,41 @@ void Application::createScenes() {
 
 	objects.push_back(std::move(sky));
 
+	auto clockTransform1 = std::make_shared<TransformComposite>();
+	clockTransform1->add(std::make_shared<Scale>(0.05f));
+	clockTransform1->add(std::make_shared<Rotation>(glm::vec3(glm::radians(90.0f), 0.0f, 0.0f)));
+	clockTransform1->add(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 24.0f)));
+	clockTransform1->add(std::make_shared<Translation>(glm::vec3(0.4f, 0.0f, 0.29f)));
+	auto clockObject1 = std::make_unique<DrawableObject>(models.at("clock"),
+								programs.at("clock"),
+								clockTransform1);
+
+	glm::ivec3 t = getTimeHMS();
+
+	float secAngle = glm::radians(-static_cast<float>(t.z % 60 * 6));
+	float minAngle = glm::radians(-static_cast<float>(t.y % 60 * 6) + glm::degrees(secAngle) / 60.0f);
+	float hourAngle = glm::radians(-static_cast<float>(t.x % 12 * 30) + glm::degrees(minAngle) / 12.0f);
+
+	clockObject1->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	clockObject1->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	clockObject1->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+
+	objects.push_back(std::move(clockObject1));						
+
+	auto clockTransform2 = std::make_shared<TransformComposite>();
+	clockTransform2->add(std::make_shared<Translation>(glm::vec3(0.5f, 1.0f, 0.3f)));
+	clockTransform2->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(30.0f), 0.0f)));
+	clockTransform2->add(std::make_shared<Scale>(0.05f));
+	auto clockObject2 = std::make_unique<DrawableObject>(models.at("clock"),
+								programs.at("clock"),
+								clockTransform2);
+
+	clockObject2->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	clockObject2->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	clockObject2->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+
+	objects.push_back(std::move(clockObject2));						
+
 	auto plainTransform = std::make_shared<TransformComposite>();
 	plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("plain"),
@@ -271,8 +310,6 @@ void Application::createScenes() {
 										bushTransform
 										));
 	}
-
-
 	
 	auto forestSunTransform = std::make_shared<TransformComposite>();
 	forestSunTransform->add(std::make_shared<Scale>(1.0f));
@@ -359,12 +396,6 @@ void Application::createScenes() {
 								programs.at("clock"),
 								clockTransform);
 
-	glm::ivec3 t = getTimeHMS();
-
-	float secAngle = glm::radians(-static_cast<float>(t.z % 60 * 6));
-	float minAngle = glm::radians(-static_cast<float>(t.y % 60 * 6) + glm::degrees(secAngle) / 60.0f);
-	float hourAngle = glm::radians(-static_cast<float>(t.x % 12 * 30) + glm::degrees(minAngle) / 12.0f);
-
 	clockObject->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	clockObject->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	clockObject->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
@@ -377,7 +408,6 @@ void Application::createScenes() {
 								));
 
 	scenes.push_back(Scene(std::move(objects)));
-
 
 }
 
@@ -429,6 +459,11 @@ void Application::run() {
 	scenes[5].getObject(0)->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	scenes[5].getObject(0)->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	scenes[5].getObject(0)->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	for (size_t i = 1; i <= 2; ++i) {
+		scenes[2].getObject(i)->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+		scenes[2].getObject(i)->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+		scenes[2].getObject(i)->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
+	}
 
 	glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
 	glm::vec3 nightColor{0.01f, 0.01f, 0.06f};
@@ -479,6 +514,57 @@ void Application::run() {
     }
 }
 
+void Application::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+	auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+	if (app) {
+		app->onResize(width, height);
+	}
+}
+
+void Application::onResize(int width, int height) {
+	if (width == 0 || height == 0) { return; }
+
+	glViewport(0, 0, width, height);
+	float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+	camera.setProjection(glm::perspective(glm::radians(60.0f), aspectRatio, 0.1f, 100.0f));
+}
+
+void Application::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+	auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+	if (app) {
+		app->onMouseButton(button, action);
+	}
+}
+
+void Application::onMouseButton(int button, int action) {
+	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		if (action == GLFW_PRESS) {
+			rotating = true;
+			glfwGetCursorPos(window.get(), &lastX, &lastY);
+		} else if (action == GLFW_RELEASE) {
+			rotating = false;
+		}
+	}
+}
+
+void Application::cursorPosCallback(GLFWwindow* window, double x, double y) {
+	auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+	if (app) {
+		app->onMouseMove(x, y);
+	}
+}
+
+void Application::onMouseMove(double x, double y) {
+	if (rotating) {
+		float dx = static_cast<float>(x - lastX);
+		float dy = static_cast<float>(y - lastY);
+		lastX = x;
+		lastY = y;
+
+		camera.rotate(dx * mouseSensitivity, -dy * mouseSensitivity);
+	}
+}
+
 void Application::getVersionInfo() const {
 	printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
 	printf("Vendor %s\n", glGetString(GL_VENDOR));
@@ -488,7 +574,6 @@ void Application::getVersionInfo() const {
 	glfwGetVersion(&major, &minor, &revision);
 	printf("Using GLFW %i.%i.%i\n", major, minor, revision);
 }
-
 
 glm::ivec3 Application::getTimeHMS() const {
 	std::time_t t = std::time(nullptr);

@@ -14,12 +14,16 @@
 #include "cameraobserver.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/common.hpp>
+#include <glm/vec3.hpp>
+#include <glm/trigonometric.hpp>
+
 #include <algorithm>
 
 Camera::Camera(const glm::vec3& pos)
 : eye(pos) {
-    center = eye + glm::vec3(0.0f, 0.0f, 1.0f);
-    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
+    front = eye + glm::vec3(0.0f, 0.0f, 1.0f);
+    view = glm::lookAt(eye, front, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
     projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 100.0f);
 }
@@ -57,50 +61,50 @@ void Camera::notify() const {
     }
 }
 
-void Camera::moveForward(float value) {
-    center += glm::vec3(0.0f, 0.0f, 1.0f * value);
-    eye += glm::vec3(0.0f, 0.0f, 1.0f * value);
-    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
+void Camera::updateView() {
+    front = glm::normalize(glm::vec3(
+        cos(yaw) * cos(pitch),
+        sin(pitch),
+        sin(yaw) * cos(pitch)
+    ));
+
+    view = glm::lookAt(eye, eye + front, up);
+    view = glm::scale(view, glm::vec3{-1.0f, 1.0f, 1.0f});
     notify();
+}
+
+void Camera::rotate(float deltaYaw, float deltaPitch) {
+    yaw += deltaYaw;
+    pitch = glm::clamp(pitch + deltaPitch, glm::radians(-89.0f), glm::radians(89.0f));
+    updateView();
+}
+
+void Camera::moveForward(float value) {
+    eye += front * value;
+    updateView();
 }
 
 void Camera::moveBackward(float value) {
-    center -= glm::vec3(0.0f, 0.0f, 1.0f * value);
-    eye -= glm::vec3(0.0f, 0.0f, 1.0f * value);
-    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
-    notify();
+    eye -= front * value;
+    updateView();
 }
 
 void Camera::moveRight(float value) {
-    center += glm::vec3(value * -1.0f, 0.0f, 0.0f);
-    eye += glm::vec3(-1.0f * value, 0.0f, 0.0f);
-    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
-    notify();
+    eye += glm::normalize(glm::cross(front, up)) * value;
+    updateView();
 }
 
 void Camera::moveLeft(float value) {
-    center -= glm::vec3(-1.0f * value, 0.0f, 0.0f);
-    eye -= glm::vec3(-1.0f * value, 0.0f, 0.0f);
-    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
-    notify();
+    eye -= glm::normalize(glm::cross(front, up)) * value;
+    updateView();
 }
 
 void Camera::moveUp(float value) {
-    center += glm::vec3(0.0f, 1.0f * value, 0.0f);
-    eye += glm::vec3(0.0f, 1.0f * value, 0.0f);
-    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
-    notify();
+    eye += up * value;
+    updateView();
 }
 
 void Camera::moveDown(float value) {
-    center -= glm::vec3(0.0f, value * 1.0f, 0.0f);
-    eye -= glm::vec3(0.0f, value * 1.0f, 0.0f);
-    view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
-    notify();
+    eye -= up * value;
+    updateView();
 }
