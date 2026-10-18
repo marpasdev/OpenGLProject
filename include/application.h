@@ -35,9 +35,9 @@ struct WindowDeleter {
 
 class Application {
     std::unique_ptr<GLFWwindow, WindowDeleter> window;
+    Camera camera;
     std::vector<Scene> scenes;
     size_t currentScene = 0;
-    std::shared_ptr<Camera> cam;        // TODO: testing, to be moved from application class
 
     void initializeGLFW(int width, int height);
 
@@ -46,7 +46,7 @@ class Application {
     glm::ivec3 getTimeHMS() const;
 
 public:
-    Application() = default;    
+    Application();    
 
     Application(const Application& other) = delete;
 

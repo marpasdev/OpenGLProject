@@ -24,20 +24,10 @@ void Scene::update(float deltaTime) {
 
 void Scene::render() const {
     for (const auto& o : objects) {
-        o->getProgram()->setUniform("viewMatrix", camera->getView());
-        o->getProgram()->setUniform("projectionMatrix", camera->getProjection());
         o->draw();
     }
 }
 
 DrawableObject* Scene::getObject(size_t index) const {
     return objects.at(index).get();
-}
-
-Camera* Scene::getCamera() const {
-    return camera.get();
-}
-
-void Scene::setCamera(std::shared_ptr<Camera> newCamera) {
-    camera = newCamera;
 }

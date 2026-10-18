@@ -1,7 +1,7 @@
 /**
  * @file camera.cpp
  *
- * @brief 
+ * @brief Represents a camera, having a way to notify its observers.
  *
  * @author Marek Pastva
  * 
@@ -11,8 +11,10 @@
  **/
 
 #include "camera.h"
+#include "cameraobserver.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <algorithm>
 
 Camera::Camera(const glm::vec3& pos)
 : eye(pos) {
@@ -32,10 +34,27 @@ glm::mat4 Camera::getProjection() const {
 
 void Camera::setProjection(const glm::mat4& newProjection) {
     projection = newProjection;
+    notify();
 }
 
 glm::vec3 Camera::getPosition() const {
     return eye;
+}
+
+void Camera::attach(CameraObserver* o) {
+    observers.push_back(o);
+    o->onCameraChanged(*this);
+}
+
+void Camera::detach(CameraObserver* o) {
+    observers.erase(std::remove(observers.begin(), observers.end(), o), observers.end());
+}
+
+void Camera::notify() const {
+    auto copy = observers;
+    for (auto* o : copy) {
+        o->onCameraChanged(*this);
+    }
 }
 
 void Camera::moveForward(float value) {
@@ -43,6 +62,7 @@ void Camera::moveForward(float value) {
     eye += glm::vec3(0.0f, 0.0f, 1.0f * value);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
+    notify();
 }
 
 void Camera::moveBackward(float value) {
@@ -50,6 +70,7 @@ void Camera::moveBackward(float value) {
     eye -= glm::vec3(0.0f, 0.0f, 1.0f * value);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
+    notify();
 }
 
 void Camera::moveRight(float value) {
@@ -57,6 +78,7 @@ void Camera::moveRight(float value) {
     eye += glm::vec3(-1.0f * value, 0.0f, 0.0f);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
+    notify();
 }
 
 void Camera::moveLeft(float value) {
@@ -64,6 +86,7 @@ void Camera::moveLeft(float value) {
     eye -= glm::vec3(-1.0f * value, 0.0f, 0.0f);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
+    notify();
 }
 
 void Camera::moveUp(float value) {
@@ -71,6 +94,7 @@ void Camera::moveUp(float value) {
     eye += glm::vec3(0.0f, 1.0f * value, 0.0f);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
+    notify();
 }
 
 void Camera::moveDown(float value) {
@@ -78,4 +102,5 @@ void Camera::moveDown(float value) {
     eye -= glm::vec3(0.0f, value * 1.0f, 0.0f);
     view = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::scale(view, glm::vec3(-1.0f, 1.0f, 1.0f));
+    notify();
 }

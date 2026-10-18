@@ -14,6 +14,9 @@
 #define CAMERA_H
 
 #include <glm/mat4x4.hpp>
+#include <vector>
+
+class CameraObserver;
 
 class Camera {
     glm::mat4 view;
@@ -21,6 +24,10 @@ class Camera {
 
     glm::vec3 eye;
     glm::vec3 center;
+
+    std::vector<CameraObserver*> observers;
+
+    void notify() const;
 
 public:
     Camera(const glm::vec3& eye);
@@ -31,6 +38,9 @@ public:
     glm::mat4 getProjection() const;
 
     glm::vec3 getPosition() const;
+
+    void attach(CameraObserver* o);
+    void detach(CameraObserver* o);
 
     void moveForward(float value);
     void moveBackward(float value);

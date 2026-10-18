@@ -20,18 +20,21 @@
 #include <glm/mat4x4.hpp>
 
 #include "shader.h"
+#include "cameraobserver.h"
+#include "camera.h"
 
-class ShaderProgram {
+class ShaderProgram : CameraObserver {
     GLuint id = 0;
+    Camera* camera;
 
     GLint getUniform(const std::string& name) const;
 
 public:
-    ShaderProgram(const Shader& vertexShader, const Shader& fragmentShader);
+    ShaderProgram(const Shader& vertexShader, const Shader& fragmentShader, Camera* camera);
 
     ShaderProgram(const ShaderProgram& other) = delete;
     
-    ~ShaderProgram();
+    ~ShaderProgram() override;
 
     ShaderProgram& operator=(const ShaderProgram& other) = delete;
 
@@ -46,6 +49,8 @@ public:
     void setUniform(const std::string& name, const glm::vec4& v) const;
 
     void setUniform(const std::string& name, const glm::mat4& m) const;
+
+    void onCameraChanged(const Camera& camera) override;
 };
 
 #endif // SHADERPROGRAM_H

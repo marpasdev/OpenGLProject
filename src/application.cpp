@@ -50,6 +50,9 @@ void WindowDeleter::operator()(GLFWwindow* window) {
 	glfwDestroyWindow(window);
 }
 
+Application::Application() : camera(Camera(glm::vec3(0.0f, 0.1f, -0.5f))) {
+}
+
 Application::~Application() {
 	scenes.clear();
 	window.reset();
@@ -94,6 +97,7 @@ void Application::initialize(int windowWidth, int windowHeight) {
 
 void Application::createScenes() {
 
+
 	std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
 	shaders["basicTransformVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/basictransform.vert");
     shaders["basicFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/basic.frag");
@@ -111,16 +115,16 @@ void Application::createScenes() {
 	shaders["clockFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/clock.frag");
 
 	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> programs;
-	programs["basic"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders["basicFrag"]);
-	programs["green"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("green"));
-	programs["lightGreen"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("lightGreen"));
-	programs["yellow"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("yellow"));
-	programs["blue"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("blue"));
-	programs["extendedBasic"] = std::make_shared<ShaderProgram>(*shaders.at("extendedbasic"), *shaders.at("basicFrag"));
-	programs["tree"] = std::make_shared<ShaderProgram>(*shaders.at("treeVert"), *shaders.at("treeFrag"));
-	programs["bush"] = std::make_shared<ShaderProgram>(*shaders.at("bushVert"), *shaders.at("treeFrag"));
-	programs["clock"] = std::make_shared<ShaderProgram>(*shaders.at("clockVert"), *shaders.at("clockFrag"));
-	programs["sky"] = std::make_shared<ShaderProgram>(*shaders.at("skyVert"), *shaders.at("basicFrag"));
+	programs["basic"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders["basicFrag"], &camera);
+	programs["green"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("green"), &camera);
+	programs["lightGreen"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("lightGreen"), &camera);
+	programs["yellow"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("yellow"), &camera);
+	programs["blue"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("blue"), &camera);
+	programs["extendedBasic"] = std::make_shared<ShaderProgram>(*shaders.at("extendedbasic"), *shaders.at("basicFrag"), &camera);
+	programs["tree"] = std::make_shared<ShaderProgram>(*shaders.at("treeVert"), *shaders.at("treeFrag"), &camera);
+	programs["bush"] = std::make_shared<ShaderProgram>(*shaders.at("bushVert"), *shaders.at("treeFrag"), &camera);
+	programs["clock"] = std::make_shared<ShaderProgram>(*shaders.at("clockVert"), *shaders.at("clockFrag"), &camera);
+	programs["sky"] = std::make_shared<ShaderProgram>(*shaders.at("skyVert"), *shaders.at("basicFrag"), &camera);
 
 	std::vector<VertexAttribute> layout6;
 	layout6.push_back({3, GL_FLOAT});
@@ -374,12 +378,7 @@ void Application::createScenes() {
 
 	scenes.push_back(Scene(std::move(objects)));
 
-	glm::vec3 pos(0.0f, 0.1f, 0.0f);
 
-	cam = std::make_shared<Camera>(pos);
-	for (auto& s : scenes) {
-		s.setCamera(cam);
-	}
 }
 
 void Application::keyCallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {
@@ -450,46 +449,22 @@ void Application::run() {
 		bool run = true;
 	}
 	if (glfwGetKey(window.get(), GLFW_KEY_W) == GLFW_PRESS) {
-		for (auto& s : scenes) {
-			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
-			cam->moveForward((run ? runMultiplier : 1.0f) * speed * deltaTime);
-			s.setCamera(cam);
-		}
+		camera.moveForward((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
 	if (glfwGetKey(window.get(), GLFW_KEY_S) == GLFW_PRESS) {
-		for (auto& s : scenes) {
-			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
-			cam->moveBackward((run ? runMultiplier : 1.0f) * speed * deltaTime);
-			s.setCamera(cam);
-		}
+		camera.moveBackward((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
 	if (glfwGetKey(window.get(), GLFW_KEY_A) == GLFW_PRESS) {
-		for (auto& s : scenes) {
-			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
-			cam->moveLeft((run ? runMultiplier : 1.0f) * speed * deltaTime);
-			s.setCamera(cam);
-		}
+		camera.moveLeft((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
 	if (glfwGetKey(window.get(), GLFW_KEY_D) == GLFW_PRESS) {
-		for (auto& s : scenes) {
-			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
-			cam->moveRight((run ? runMultiplier : 1.0f) * speed * deltaTime);
-			s.setCamera(cam);
-		}
+		camera.moveRight((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
 	if (glfwGetKey(window.get(), GLFW_KEY_SPACE) == GLFW_PRESS) {
-		for (auto& s : scenes) {
-			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
-			cam->moveUp((run ? runMultiplier : 1.0f) * speed * deltaTime);
-			s.setCamera(cam);
-		}
+		camera.moveUp((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
 	if (glfwGetKey(window.get(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-		for (auto& s : scenes) {
-			auto cam = std::make_shared<Camera>(s.getCamera()->getPosition());
-			cam->moveDown((run ? runMultiplier : 1.0f) * speed * deltaTime);
-			s.setCamera(cam);
-		}
+		camera.moveDown((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
 
 	run = false;

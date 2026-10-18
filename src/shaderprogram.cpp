@@ -18,7 +18,8 @@
 
 #include "shaderprogram.h"
 
-ShaderProgram::ShaderProgram(const Shader& vertexShader, const Shader& fragmentShader) {
+ShaderProgram::ShaderProgram(const Shader& vertexShader, const Shader& fragmentShader, Camera* camera) 
+    : camera(camera) {
     id = glCreateProgram();
 
     vertexShader.attachTo(id);
@@ -36,9 +37,13 @@ ShaderProgram::ShaderProgram(const Shader& vertexShader, const Shader& fragmentS
                   << infoLog << "\n";
         exit(EXIT_FAILURE);
     }
+
+    camera->attach(this);
+
 }
 
 ShaderProgram::~ShaderProgram() {
+    camera->detach(this);
     glDeleteProgram(id);
 }
 
@@ -107,4 +112,9 @@ void ShaderProgram::setUniform(const std::string& name, const glm::mat4& m) cons
 
         glUseProgram(0);
     }
+}
+
+void ShaderProgram::onCameraChanged(const Camera& camera) {
+    setUniform("viewMatrix", camera.getView());
+    setUniform("projectionMatrix", camera.getProjection());
 }
