@@ -26,6 +26,9 @@
 #include <glm/vec3.hpp>
 
 #include "scene.h"
+#include "shader.h"
+#include "shaderprogram.h"
+#include "model.h"
 
 #include "camera.h" // to be removed
 
@@ -50,6 +53,12 @@ class Application {
 
     glm::ivec3 getTimeHMS() const;
 
+    std::unordered_map<std::string, std::unique_ptr<Shader>> createShaders() const;
+
+    std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> createPrograms(const std::unordered_map<std::string, std::unique_ptr<Shader>>& shaders);
+
+    std::unordered_map<std::string, std::shared_ptr<Model>> createModels() const;
+
 public:
     Application();    
 
@@ -60,6 +69,7 @@ public:
     Application& operator=(const Application& other) = delete;
 
     void initialize(int windowWidth, int windowHeight);
+
 
     void createScenes();
 

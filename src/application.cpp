@@ -26,9 +26,12 @@
 #include "models/bushes.h"
 #include "models/plain.h"
 #include "models/login.h"
+
 #include "models/space/sun.h"
 #include "models/space/earth.h"
 #include "models/space/moon.h"
+#include "models/space/mercury.h"
+#include "models/space/venus.h"
 
 #include "models/clock.h"
 
@@ -99,37 +102,53 @@ void Application::initialize(int windowWidth, int windowHeight) {
 	glEnable(GL_DEPTH_TEST);
 }
 
-void Application::createScenes() {
-
-
+std::unordered_map<std::string, std::unique_ptr<Shader>> Application::createShaders() const {
 	std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
-	shaders["basicTransformVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/basictransform.vert");
-    shaders["basicFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/basic.frag");
-	shaders["green"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/green.frag");
-	shaders["lightGreen"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/lightgreen.frag");
-	shaders["yellow"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/yellow.frag");
-	shaders["blue"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/blue.frag");
-	shaders["extendedbasic"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/extendedbasictransform.vert");
-	shaders["treeVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/tree.vert");
-	shaders["treeFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree.frag");
-	shaders["bushVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/bush.vert");
-	shaders["skyVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/sky.vert");
+	shaders["v_pvm"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/pvm.vert");
+    shaders["f_basic"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/basic.frag");
+	shaders["f_green"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/green.frag");
+	shaders["f_lightgreen"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/lightgreen.frag");
+	shaders["f_yellow"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/yellow.frag");
+	shaders["f_blue"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/blue.frag");
+	shaders["v_pvm9"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/pvm9.vert");
+	shaders["v_tree"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/tree.vert");
+	shaders["f_tree"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree.frag");
+	shaders["v_bush"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/bush.vert");
+	shaders["v_sky"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/sky.vert");
 
-	shaders["clockVert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/clock.vert");
-	shaders["clockFrag"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/clock.frag");
+	shaders["v_lambert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/lambert.vert");
+	shaders["f_lambert"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/lambert.frag");
 
+	shaders["v_phong"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/phong.vert");
+	shaders["f_phong"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/phong.frag");
+
+	shaders["v_phong9"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/phong9.vert");
+	shaders["f_phong9"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/phong9.frag");
+
+	shaders["v_clock"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/clock.vert");
+	shaders["f_clock"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/clock.frag");
+	return std::move(shaders);
+}
+
+std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> Application::createPrograms(const std::unordered_map<std::string, std::unique_ptr<Shader>>& shaders) {
 	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> programs;
-	programs["basic"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders["basicFrag"], &camera);
-	programs["green"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("green"), &camera);
-	programs["lightGreen"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("lightGreen"), &camera);
-	programs["yellow"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("yellow"), &camera);
-	programs["blue"] = std::make_shared<ShaderProgram>(*shaders.at("basicTransformVert"), *shaders.at("blue"), &camera);
-	programs["extendedBasic"] = std::make_shared<ShaderProgram>(*shaders.at("extendedbasic"), *shaders.at("basicFrag"), &camera);
-	programs["tree"] = std::make_shared<ShaderProgram>(*shaders.at("treeVert"), *shaders.at("treeFrag"), &camera);
-	programs["bush"] = std::make_shared<ShaderProgram>(*shaders.at("bushVert"), *shaders.at("treeFrag"), &camera);
-	programs["clock"] = std::make_shared<ShaderProgram>(*shaders.at("clockVert"), *shaders.at("clockFrag"), &camera);
-	programs["sky"] = std::make_shared<ShaderProgram>(*shaders.at("skyVert"), *shaders.at("basicFrag"), &camera);
+	programs["basic"] = std::make_unique<ShaderProgram>(*shaders.at("v_pvm"), *shaders.at("f_basic"), &camera);
+	programs["green"] = std::make_unique<ShaderProgram>(*shaders.at("v_pvm"), *shaders.at("f_green"), &camera);
+	programs["lightgreen"] = std::make_unique<ShaderProgram>(*shaders.at("v_pvm"), *shaders.at("f_lightgreen"), &camera);
+	programs["yellow"] = std::make_unique<ShaderProgram>(*shaders.at("v_pvm"), *shaders.at("f_yellow"), &camera);
+	programs["blue"] = std::make_unique<ShaderProgram>(*shaders.at("v_pvm"), *shaders.at("f_blue"), &camera);
+	programs["pvm9"] = std::make_unique<ShaderProgram>(*shaders.at("v_pvm9"), *shaders.at("f_basic"), &camera);
+	programs["tree"] = std::make_unique<ShaderProgram>(*shaders.at("v_tree"), *shaders.at("f_tree"), &camera);
+	programs["bush"] = std::make_unique<ShaderProgram>(*shaders.at("v_bush"), *shaders.at("f_tree"), &camera);
+	programs["clock"] = std::make_unique<ShaderProgram>(*shaders.at("v_clock"), *shaders.at("f_clock"), &camera);
+	programs["sky"] = std::make_unique<ShaderProgram>(*shaders.at("v_sky"), *shaders.at("f_basic"), &camera);
+	programs["lambert"] = std::make_unique<ShaderProgram>(*shaders.at("v_lambert"), *shaders.at("f_lambert"), &camera);
+	programs["phong"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong"), *shaders.at("f_phong"), &camera);
+	programs["phong9"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong9"), *shaders.at("f_phong9"), &camera);
+	return programs;
+}
 
+std::unordered_map<std::string, std::shared_ptr<Model>> Application::createModels() const {
 	std::vector<VertexAttribute> layout6;
 	layout6.push_back({3, GL_FLOAT});
 	layout6.push_back({3, GL_FLOAT});
@@ -165,11 +184,25 @@ void Application::createScenes() {
 
 	// solar system
 	models["sun"] = std::make_shared<Model>(sun, sizeof(sun), layout9);
+	models["mercury"] = std::make_shared<Model>(mercury, sizeof(mercury), layout9);
+	models["venus"] = std::make_shared<Model>(venus, sizeof(venus), layout9);
 	models["earth"] = std::make_shared<Model>(earth, sizeof(earth), layout9);
 	models["moon"] = std::make_shared<Model>(moon, sizeof(moon), layout9);
 
 	models["clock"] = std::make_shared<Model>(clockModel, sizeof(clockModel), layout9);
 
+	return models;
+}
+
+void Application::createScenes() {
+	auto shaders = createShaders();
+
+	auto programs = createPrograms(std::move(shaders));
+
+	auto models = createModels();
+
+
+	// create scenes
     std::vector<std::unique_ptr<DrawableObject>> objects;
 
 	auto signatureTransform = std::make_shared<TransformComposite>();
@@ -194,24 +227,25 @@ void Application::createScenes() {
 								));
 	scenes.push_back(Scene(std::move(objects)));
 
-	// Scene 1 - little sphere
+	// Scene 1 - sphere 
 	objects.clear();
 
-	auto sphereTransform = std::make_shared<TransformComposite>();
-	sphereTransform->add(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f)));
-	sphereTransform->add(std::make_shared<DynamicRotation>(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(360.0f / 2.0f)));
-	sphereTransform->add(std::make_shared<Scale>(0.4f));
-
+	auto littleSphereTransform = std::make_shared<TransformComposite>();
+	littleSphereTransform->add(std::make_shared<Scale>(0.2f));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
-								programs.at("basic"),
-								sphereTransform
-							));
+			programs.at("basic"), littleSphereTransform));
+
 	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
 									programs.at("basic"),
 									signatureTransform
 								));
+
 	scenes.push_back(Scene(std::move(objects)));
+
 	
+	// Scene 2
+	objects.clear();
+
 	std::mt19937 rng{std::random_device{}()};
 
 	std::uniform_real_distribution<float> dist(-2.0f, 2.0f);
@@ -219,8 +253,6 @@ void Application::createScenes() {
 	std::uniform_real_distribution<float> randomShade(0.0f, 0.3f);
 	std::uniform_real_distribution<float> randomScale(0.7f, 1.0f);
 	
-	// Scene 2
-	objects.clear();
 	auto skyTransform = std::make_shared<TransformComposite>();
 
 	glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
@@ -284,7 +316,7 @@ void Application::createScenes() {
 	auto plainTransform = std::make_shared<TransformComposite>();
 	plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("plain"),
-									programs.at("lightGreen"),
+									programs.at("lightgreen"),
 									plainTransform
 									));
 	for (size_t i = 0; i < 74; ++i) {
@@ -324,7 +356,7 @@ void Application::createScenes() {
 	forestMoonTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 12.0f, -12.0f)));
 	forestMoonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), 1.0f));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
-									 programs.at("extendedBasic"),
+									 programs.at("pvm9"),
 									 forestMoonTransform
 									 ));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
@@ -352,33 +384,55 @@ void Application::createScenes() {
 	auto sunSpin = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 6.0f), false);
 	sunTransform->add(sunSpin);
 	objects.push_back(std::make_unique<DrawableObject>(models.at("sun"),
-			programs.at("extendedBasic"),
+			programs.at("pvm9"),
 			sunTransform
 			));
 
+	float baseScale = 0.1f;
+	// Mercury
+	auto mercuryTransform = std::make_shared<TransformComposite>();
+	mercuryTransform->add(std::make_shared<Scale>(baseScale * 0.389f));
+	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 4.0f), true));
+	// mercuryTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(0.0f), 0.0f, 0.0f}));	// unnecessary - axis tilt angle is near 0
+	mercuryTransform->add(std::make_shared<Translation>(glm::vec3{0.6f, 0.0f, 0.0f}));
+	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 6.0f), false));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("mercury"),
+			programs.at("phong9"), mercuryTransform));
+			
+	// Venus
+	auto venusTransform = std::make_shared<TransformComposite>();
+	venusTransform->add(std::make_shared<Scale>(baseScale * 0.949f));
+	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 4.0f), true));
+	venusTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(177.4f), 0.0f, 0.0f}));
+	venusTransform->add(std::make_shared<Translation>(glm::vec3{1.1f, 0.0f, 0.0f}));
+	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 6.0f), false));
+	objects.push_back(std::make_unique<DrawableObject>(models.at("venus"),
+			programs.at("phong9"), venusTransform));
+
 	// Earth
 	auto earthTransform = std::make_shared<TransformComposite>();
-	earthTransform->add(std::make_shared<Scale>(0.1f));
-	earthTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), true));
-	earthTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, 0.0f, 0.0f)));
-	auto earthOrbit = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 36.0f), false);
+	earthTransform->add(std::make_shared<Scale>(baseScale));
+	earthTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 1.0f), true));
+	earthTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(23.0f), 0.0f, 0.0f}));
+	earthTransform->add(std::make_shared<Translation>(glm::vec3(1.8f, 0.0f, 0.0f)));
+	auto earthOrbit = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 365.0f), false);
 	earthTransform->add(earthOrbit);
 	objects.push_back(std::make_unique<DrawableObject>(models.at("earth"),
-			programs.at("extendedBasic"),
+			programs.at("phong9"),
 			earthTransform
 			));
 
 	// Moon
 	auto moonTransform = std::make_shared<TransformComposite>();
-	moonTransform->add(std::make_shared<Scale>(0.05f));
+	moonTransform->add(std::make_shared<Scale>(baseScale * 0.273f));
 	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), false));
 	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.2f, 0.0f, 0.0f)));
 	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), true));
-	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.8f, 0.0f, 0.0f)));
+	moonTransform->add(std::make_shared<Translation>(glm::vec3(1.8f, 0.0f, 0.0f)));
 	moonTransform->add(earthOrbit);
 
 	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
-			programs.at("extendedBasic"),
+			programs.at("phong9"),
 			moonTransform
 			));
 
@@ -386,6 +440,7 @@ void Application::createScenes() {
 									programs.at("basic"),
 									signatureTransform
 								));
+
 	scenes.push_back(Scene(std::move(objects)));
 
 	objects.clear();
@@ -407,6 +462,27 @@ void Application::createScenes() {
 									signatureTransform
 								));
 
+	scenes.push_back(Scene(std::move(objects)));
+
+	// Scene 6 - spheres with lighting
+	objects.clear();
+
+	for (int i = 0; i < 2; ++i) {
+		for (int j = 0; j < 2; ++j) {
+			auto sphereTransform = std::make_shared<TransformComposite>();
+			sphereTransform->add(std::make_shared<Scale>(0.3f));
+			sphereTransform->add(std::make_shared<Translation>(glm::vec3(-0.5f + i * 1.0f, - 0.5f + j * 1.0f, 0.0f)));
+			objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+										programs.at("phong"),
+										sphereTransform
+									));
+		}
+	}
+
+	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+									programs.at("basic"),
+									signatureTransform
+								));
 	scenes.push_back(Scene(std::move(objects)));
 
 }

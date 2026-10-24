@@ -117,4 +117,8 @@ void ShaderProgram::setUniform(const std::string& name, const glm::mat4& m) cons
 void ShaderProgram::onCameraChanged(const Camera& camera) {
     setUniform("viewMatrix", camera.getView());
     setUniform("projectionMatrix", camera.getProjection());
+
+    if (glGetUniformLocation(this->id, "cameraPos") != -1) {
+        setUniform("cameraPos", camera.getPosition());
+    }
 }
