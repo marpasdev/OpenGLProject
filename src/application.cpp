@@ -32,6 +32,7 @@
 #include "models/space/moon.h"
 #include "models/space/mercury.h"
 #include "models/space/venus.h"
+#include "models/space/satellite.h"
 
 #include "models/clock.h"
 
@@ -127,6 +128,11 @@ std::unordered_map<std::string, std::unique_ptr<Shader>> Application::createShad
 
 	shaders["v_clock"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/clock.vert");
 	shaders["f_clock"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/clock.frag");
+
+	shaders["f_blinn"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/blinn.frag");
+
+	shaders["v_constant"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/constant.vert");
+	shaders["f_constant"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/constant.frag");
 	return std::move(shaders);
 }
 
@@ -145,6 +151,8 @@ std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> Application::cre
 	programs["lambert"] = std::make_unique<ShaderProgram>(*shaders.at("v_lambert"), *shaders.at("f_lambert"), &camera);
 	programs["phong"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong"), *shaders.at("f_phong"), &camera);
 	programs["phong9"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong9"), *shaders.at("f_phong9"), &camera);
+	programs["blinnphong"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong"), *shaders.at("f_blinn"), &camera);
+	programs["constant"] = std::make_unique<ShaderProgram>(*shaders.at("v_constant"), *shaders.at("f_constant"), &camera);
 	return programs;
 }
 
@@ -188,6 +196,8 @@ std::unordered_map<std::string, std::shared_ptr<Model>> Application::createModel
 	models["venus"] = std::make_shared<Model>(venus, sizeof(venus), layout9);
 	models["earth"] = std::make_shared<Model>(earth, sizeof(earth), layout9);
 	models["moon"] = std::make_shared<Model>(moon, sizeof(moon), layout9);
+	models["satellite"] = std::make_shared<Model>(satellite, sizeof(satellite), layout9);
+
 
 	models["clock"] = std::make_shared<Model>(clockModel, sizeof(clockModel), layout9);
 
@@ -395,7 +405,7 @@ void Application::createScenes() {
 	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 4.0f), true));
 	// mercuryTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(0.0f), 0.0f, 0.0f}));	// unnecessary - axis tilt angle is near 0
 	mercuryTransform->add(std::make_shared<Translation>(glm::vec3{0.6f, 0.0f, 0.0f}));
-	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 6.0f), false));
+	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 115.88f), false));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("mercury"),
 			programs.at("phong9"), mercuryTransform));
 			
@@ -405,7 +415,7 @@ void Application::createScenes() {
 	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 4.0f), true));
 	venusTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(177.4f), 0.0f, 0.0f}));
 	venusTransform->add(std::make_shared<Translation>(glm::vec3{1.1f, 0.0f, 0.0f}));
-	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 6.0f), false));
+	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 224.7f), false));
 	objects.push_back(std::make_unique<DrawableObject>(models.at("venus"),
 			programs.at("phong9"), venusTransform));
 
@@ -427,13 +437,24 @@ void Application::createScenes() {
 	moonTransform->add(std::make_shared<Scale>(baseScale * 0.273f));
 	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), false));
 	moonTransform->add(std::make_shared<Translation>(glm::vec3(0.2f, 0.0f, 0.0f)));
-	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 4.0f), true));
+	moonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 28.0f), true));
 	moonTransform->add(std::make_shared<Translation>(glm::vec3(1.8f, 0.0f, 0.0f)));
 	moonTransform->add(earthOrbit);
 
 	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
 			programs.at("phong9"),
 			moonTransform
+			));
+		
+	auto satelliteTransform = std::make_shared<TransformComposite>();
+	satelliteTransform->add(std::make_shared<Scale>(0.07f));
+	satelliteTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(0.0f), 0.0f, glm::radians(90.0f)}));
+	satelliteTransform->add(std::make_shared<Translation>(glm::vec3{2.1f, 0.0f, 0.0f}));
+	satelliteTransform->add(std::make_shared<DynamicRotation>(glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 72.0f)));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.at("satellite"),
+			programs.at("phong9"),
+			satelliteTransform
 			));
 
 	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
@@ -469,11 +490,25 @@ void Application::createScenes() {
 
 	for (int i = 0; i < 2; ++i) {
 		for (int j = 0; j < 2; ++j) {
+			std::string program = "";
+			if (i == 0) {
+				if (j == 0) {
+					program = "phong";
+				} else {
+					program = "constant";
+				}
+			} else if (i == 1) {
+				if (j == 0) {
+					program = "blinnphong";
+				} else {
+					program = "lambert";
+				}
+			}
 			auto sphereTransform = std::make_shared<TransformComposite>();
 			sphereTransform->add(std::make_shared<Scale>(0.3f));
 			sphereTransform->add(std::make_shared<Translation>(glm::vec3(-0.5f + i * 1.0f, - 0.5f + j * 1.0f, 0.0f)));
 			objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
-										programs.at("phong"),
+										programs.at(program),
 										sphereTransform
 									));
 		}
