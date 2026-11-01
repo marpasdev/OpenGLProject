@@ -24,6 +24,7 @@ int main() {
 
     app->initialize(1200, 1200);
 
+    app->createModels();
     app->createScenes();
 
     app->run();

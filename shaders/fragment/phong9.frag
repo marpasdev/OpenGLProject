@@ -8,9 +8,19 @@ uniform vec3 cameraPos;
 
 out vec4 fragColor;
 
+// float attenuation(float dist, float constant, float linear, float quadratic) {
+//     return clamp(1 / (const + linear * dist + quadratic * dist * dist), 0.0, 1.0);
+// }
+
 void main() {
+
+
     vec3 lightPosition = vec3(0.0, 0.0, 0.0);
     vec3 lightDir = normalize(lightPosition - worldPos.xyz);
+
+    // float distVec = cameraPos - lightPosition;
+    // float dist = sqrt(distVec.x * distVec.x + distVec.y * distVec.y + distVec.z * distVec.z);
+    // float att = attenuation(dist, 1.0, 0.09, 0.032);
 
     float diff = max(dot(normalize(lightDir), normalize(worldNor)), 0.0);
 

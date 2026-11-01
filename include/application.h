@@ -29,6 +29,7 @@
 #include "shader.h"
 #include "shaderprogram.h"
 #include "model.h"
+#include "modelmanager.h"
 
 #include "camera.h" // to be removed
 
@@ -47,6 +48,8 @@ class Application {
     double lastY = 0;
     float mouseSensitivity = glm::radians(0.2f);
 
+    ModelManager models;
+
     void initializeGLFW(int width, int height);
 
     void processInput(float deltaTime);
@@ -56,8 +59,6 @@ class Application {
     std::unordered_map<std::string, std::unique_ptr<Shader>> createShaders() const;
 
     std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> createPrograms(const std::unordered_map<std::string, std::unique_ptr<Shader>>& shaders);
-
-    std::unordered_map<std::string, std::shared_ptr<Model>> createModels() const;
 
 public:
     Application();    
@@ -70,6 +71,7 @@ public:
 
     void initialize(int windowWidth, int windowHeight);
 
+    void createModels();
 
     void createScenes();
 

@@ -156,24 +156,13 @@ std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> Application::cre
 	return programs;
 }
 
-std::unordered_map<std::string, std::shared_ptr<Model>> Application::createModels() const {
-	std::vector<VertexAttribute> layout6;
-	layout6.push_back({3, GL_FLOAT});
-	layout6.push_back({3, GL_FLOAT});
-
-	std::vector<VertexAttribute> layout9;
-	layout9.push_back({3, GL_FLOAT});
-	layout9.push_back({3, GL_FLOAT});
-	layout9.push_back({3, GL_FLOAT});
-
+void Application::createModels() {
     float points[] = {
         0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
         -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f
     };
-	
-	std::unordered_map<std::string, std::shared_ptr<Model>> models;
-    models["triangle"] = std::make_shared<Model>(points, sizeof(points), layout6);
+    models.add("triangle", points, sizeof(points));
 
     float square[] = {
         -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -183,34 +172,29 @@ std::unordered_map<std::string, std::shared_ptr<Model>> Application::createModel
         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
         0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f
     };
-	models["square"] = std::make_shared<Model>(square, sizeof(square), layout6);
-	models["sphere"] = std::make_shared<Model>(sphere, sizeof(sphere), layout6);
-	models["plain"] = std::make_shared<Model>(plain, sizeof(plain), layout6);
-    models["login"] = std::make_shared<Model>(login, sizeof(login), layout6);
-	models["tree"] = std::make_shared<Model>(tree, sizeof(tree), layout6);
-	models["bushes"] = std::make_shared<Model>(bushes, sizeof(bushes), layout6);
+	models.add("square", square, sizeof(square));
+
+	models.add("sphere", sphere, sizeof(sphere));
+	models.add("plain", plain, sizeof(plain));
+	models.add("login", login, sizeof(login));
+	models.add("tree", tree, sizeof(tree));
+	models.add("bush", bushes, sizeof(bushes));
 
 	// solar system
-	models["sun"] = std::make_shared<Model>(sun, sizeof(sun), layout9);
-	models["mercury"] = std::make_shared<Model>(mercury, sizeof(mercury), layout9);
-	models["venus"] = std::make_shared<Model>(venus, sizeof(venus), layout9);
-	models["earth"] = std::make_shared<Model>(earth, sizeof(earth), layout9);
-	models["moon"] = std::make_shared<Model>(moon, sizeof(moon), layout9);
-	models["satellite"] = std::make_shared<Model>(satellite, sizeof(satellite), layout9);
+	models.add("sun", sun, sizeof(sun), VertexLayoutPreset::PosNorCol);
+	models.add("mercury", mercury, sizeof(mercury), VertexLayoutPreset::PosNorCol);
+	models.add("venus", venus, sizeof(venus), VertexLayoutPreset::PosNorCol);
+	models.add("earth", earth, sizeof(earth), VertexLayoutPreset::PosNorCol);
+	models.add("moon", moon, sizeof(moon), VertexLayoutPreset::PosNorCol);
+	models.add("satellite", satellite, sizeof(satellite), VertexLayoutPreset::PosNorCol);
 
-
-	models["clock"] = std::make_shared<Model>(clockModel, sizeof(clockModel), layout9);
-
-	return models;
+	models.add("clock", clockModel, sizeof(clockModel), VertexLayoutPreset::PosNorCol);
 }
 
 void Application::createScenes() {
 	auto shaders = createShaders();
 
 	auto programs = createPrograms(std::move(shaders));
-
-	auto models = createModels();
-
 
 	// create scenes
     std::vector<std::unique_ptr<DrawableObject>> objects;
@@ -227,11 +211,11 @@ void Application::createScenes() {
 	// opposite order of transformations:
 	triangleTransform->add(std::make_shared<DynamicRotation>(glm::vec3(0.5f, 0.0f, 0.0f), glm::radians(360.0f / 6.0f)));
 	triangleTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 0.5f, 0.0f)));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("triangle"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("triangle"),
 								programs.at("basic"),
 								triangleTransform
 								));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
 								));
@@ -242,10 +226,10 @@ void Application::createScenes() {
 
 	auto littleSphereTransform = std::make_shared<TransformComposite>();
 	littleSphereTransform->add(std::make_shared<Scale>(0.2f));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("sphere"),
 			programs.at("basic"), littleSphereTransform));
 
-	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
 								));
@@ -279,7 +263,7 @@ void Application::createScenes() {
 	glm::vec3 skyColor = glm::mix(nightColor, dayColor, daylight);
 
 	skyTransform->add(std::make_shared<Scale>(50.0f));
-	auto sky = std::make_unique<DrawableObject>(models.at("sphere"),
+	auto sky = std::make_unique<DrawableObject>(models.get("sphere"),
 										programs.at("sky"),
 										skyTransform
 									);
@@ -293,7 +277,7 @@ void Application::createScenes() {
 	clockTransform1->add(std::make_shared<Rotation>(glm::vec3(glm::radians(90.0f), 0.0f, 0.0f)));
 	clockTransform1->add(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 24.0f)));
 	clockTransform1->add(std::make_shared<Translation>(glm::vec3(0.4f, 0.0f, 0.29f)));
-	auto clockObject1 = std::make_unique<DrawableObject>(models.at("clock"),
+	auto clockObject1 = std::make_unique<DrawableObject>(models.get("clock"),
 								programs.at("clock"),
 								clockTransform1);
 
@@ -313,7 +297,7 @@ void Application::createScenes() {
 	clockTransform2->add(std::make_shared<Translation>(glm::vec3(0.5f, 1.0f, 0.3f)));
 	clockTransform2->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(30.0f), 0.0f)));
 	clockTransform2->add(std::make_shared<Scale>(0.05f));
-	auto clockObject2 = std::make_unique<DrawableObject>(models.at("clock"),
+	auto clockObject2 = std::make_unique<DrawableObject>(models.get("clock"),
 								programs.at("clock"),
 								clockTransform2);
 
@@ -325,7 +309,7 @@ void Application::createScenes() {
 
 	auto plainTransform = std::make_shared<TransformComposite>();
 	plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("plain"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("plain"),
 									programs.at("lightgreen"),
 									plainTransform
 									));
@@ -335,7 +319,7 @@ void Application::createScenes() {
 		treeTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
 		treeTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), 0.0f, dist(rng))));
 
-		auto tree = std::make_unique<DrawableObject>(models.at("tree"),
+		auto tree = std::make_unique<DrawableObject>(models.get("tree"),
 										programs.at("tree"),
 										treeTransform
 										);
@@ -347,7 +331,7 @@ void Application::createScenes() {
 		bushTransform->add(std::make_shared<Scale>(0.2f));
 		bushTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
 		bushTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), 0.0f, dist(rng))));
-		objects.push_back(std::make_unique<DrawableObject>(models.at("bushes"),
+		objects.push_back(std::make_unique<DrawableObject>(models.get("bush"),
 										programs.at("bush"),
 										bushTransform
 										));
@@ -357,7 +341,7 @@ void Application::createScenes() {
 	forestSunTransform->add(std::make_shared<Scale>(1.0f));
 	forestSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, -12.0f, 12.0f)));
 	forestSunTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), -1.0f));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("sphere"),
 									 programs.at("yellow"),
 									 forestSunTransform
 									 ));
@@ -365,11 +349,11 @@ void Application::createScenes() {
 	forestMoonTransform->add(std::make_shared<Scale>(1.0f));
 	forestMoonTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 12.0f, -12.0f)));
 	forestMoonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), 1.0f));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("moon"),
 									 programs.at("pvm9"),
 									 forestMoonTransform
 									 ));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
 								));
@@ -380,7 +364,7 @@ void Application::createScenes() {
 	auto loginTransform = std::make_shared<TransformComposite>();
 	loginTransform->add(std::make_shared<Scale>(0.7f));
 	loginTransform->add(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 12.0f)));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									loginTransform
 								));
@@ -393,7 +377,7 @@ void Application::createScenes() {
 	sunTransform->add(std::make_shared<Scale>(0.2f));
 	auto sunSpin = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 6.0f), false);
 	sunTransform->add(sunSpin);
-	objects.push_back(std::make_unique<DrawableObject>(models.at("sun"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("sun"),
 			programs.at("pvm9"),
 			sunTransform
 			));
@@ -406,7 +390,7 @@ void Application::createScenes() {
 	// mercuryTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(0.0f), 0.0f, 0.0f}));	// unnecessary - axis tilt angle is near 0
 	mercuryTransform->add(std::make_shared<Translation>(glm::vec3{0.6f, 0.0f, 0.0f}));
 	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 115.88f), false));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("mercury"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("mercury"),
 			programs.at("phong9"), mercuryTransform));
 			
 	// Venus
@@ -416,7 +400,7 @@ void Application::createScenes() {
 	venusTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(177.4f), 0.0f, 0.0f}));
 	venusTransform->add(std::make_shared<Translation>(glm::vec3{1.1f, 0.0f, 0.0f}));
 	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 224.7f), false));
-	objects.push_back(std::make_unique<DrawableObject>(models.at("venus"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("venus"),
 			programs.at("phong9"), venusTransform));
 
 	// Earth
@@ -427,7 +411,7 @@ void Application::createScenes() {
 	earthTransform->add(std::make_shared<Translation>(glm::vec3(1.8f, 0.0f, 0.0f)));
 	auto earthOrbit = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 365.0f), false);
 	earthTransform->add(earthOrbit);
-	objects.push_back(std::make_unique<DrawableObject>(models.at("earth"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("earth"),
 			programs.at("phong9"),
 			earthTransform
 			));
@@ -441,7 +425,7 @@ void Application::createScenes() {
 	moonTransform->add(std::make_shared<Translation>(glm::vec3(1.8f, 0.0f, 0.0f)));
 	moonTransform->add(earthOrbit);
 
-	objects.push_back(std::make_unique<DrawableObject>(models.at("moon"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("moon"),
 			programs.at("phong9"),
 			moonTransform
 			));
@@ -452,12 +436,12 @@ void Application::createScenes() {
 	satelliteTransform->add(std::make_shared<Translation>(glm::vec3{2.1f, 0.0f, 0.0f}));
 	satelliteTransform->add(std::make_shared<DynamicRotation>(glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 72.0f)));
 
-	objects.push_back(std::make_unique<DrawableObject>(models.at("satellite"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("satellite"),
 			programs.at("phong9"),
 			satelliteTransform
 			));
 
-	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
 								));
@@ -468,7 +452,7 @@ void Application::createScenes() {
 
 	// Scene 5 - Clock
 	auto clockTransform = std::make_shared<TransformComposite>();
-	auto clockObject = std::make_unique<DrawableObject>(models.at("clock"),
+	auto clockObject = std::make_unique<DrawableObject>(models.get("clock"),
 								programs.at("clock"),
 								clockTransform);
 
@@ -478,7 +462,7 @@ void Application::createScenes() {
 	// clockObject->setTransform(std::make_shared<DynamicRotation>(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 6.0f)));
 
 	objects.push_back(std::move(clockObject));						
-	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
 								));
@@ -507,14 +491,14 @@ void Application::createScenes() {
 			auto sphereTransform = std::make_shared<TransformComposite>();
 			sphereTransform->add(std::make_shared<Scale>(0.3f));
 			sphereTransform->add(std::make_shared<Translation>(glm::vec3(-0.5f + i * 1.0f, - 0.5f + j * 1.0f, 0.0f)));
-			objects.push_back(std::make_unique<DrawableObject>(models.at("sphere"),
+			objects.push_back(std::make_unique<DrawableObject>(models.get("sphere"),
 										programs.at(program),
 										sphereTransform
 									));
 		}
 	}
 
-	objects.push_back(std::make_unique<DrawableObject>(models.at("login"),
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
 								));

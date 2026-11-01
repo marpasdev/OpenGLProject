@@ -29,6 +29,7 @@ add_executable(OpenGLProject
     src/transform/static/scale.cpp
     src/transform/dynamic/dynamicrotation.cpp
     src/model.cpp
+    src/modelmanager.cpp
     src/drawableobject.cpp
     src/scene.cpp
     src/application.cpp

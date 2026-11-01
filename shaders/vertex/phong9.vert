@@ -9,7 +9,9 @@ uniform mat4 viewMatrix = mat4(1.0);
 uniform mat4 projectionMatrix = mat4(1.0);
 
 out vec4 worldPos;
+
 out vec3 worldNor;
+
 out vec3 worldColor;
 
 void main() {
