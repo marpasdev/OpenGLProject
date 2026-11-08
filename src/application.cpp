@@ -45,6 +45,8 @@
 
 #include "transform/dynamic/dynamicrotation.h"
 
+#include "skybox.h"
+
 #include "application.h"
 
 #include <unordered_map>
@@ -112,7 +114,7 @@ std::unordered_map<std::string, std::unique_ptr<Shader>> Application::createShad
 	shaders["v_pvm9"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/pvm9.vert");
 	shaders["v_tree"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/tree.vert");
 	shaders["f_tree"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree.frag");
-	shaders["v_bush"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/bush.vert");
+	shaders["v_bush"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/bushpvm.vert");
 	shaders["v_sky"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/sky.vert");
 
 	shaders["v_lambert"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/lambert.vert");
@@ -134,6 +136,13 @@ std::unordered_map<std::string, std::unique_ptr<Shader>> Application::createShad
 	
 	shaders["v_texture"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/texture.vert");
 	shaders["f_texture"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/texture.frag");
+
+	shaders["v_texturephong"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/texture_phong.vert");
+	shaders["f_texturephong"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/texture_phong.frag");
+
+	shaders["v_skybox"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/skybox.vert");
+	shaders["f_skybox"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/skybox.frag");
+
 	return std::move(shaders);
 }
 
@@ -156,6 +165,9 @@ std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> Application::cre
 	programs["constant"] = std::make_unique<ShaderProgram>(*shaders.at("v_constant"), *shaders.at("f_constant"), &camera);
 
 	programs["texture"] = std::make_unique<ShaderProgram>(*shaders.at("v_texture"), *shaders.at("f_texture"), &camera);
+
+	programs["texturephong"] = std::make_unique<ShaderProgram>(*shaders.at("v_texturephong"), *shaders.at("f_texturephong"), &camera);
+	programs["skybox"] = std::make_unique<ShaderProgram>(*shaders.at("v_skybox"), *shaders.at("f_skybox"), &camera);
 	return programs;
 }
 
@@ -210,6 +222,9 @@ void Application::createModels() {
 	models.add("orange_chair", "OrangeChair.obj");
 	models.add("eb408_table", "table.obj");
 	models.add("whiteboard", "Whiteboard.obj");
+	models.add("monitor", "monitor.obj");
+	
+	models.add("skybox", "skybox.obj", VertexLayoutPreset::PosNorUVW);
 }
 
 void Application::createTextures() {
@@ -218,13 +233,18 @@ void Application::createTextures() {
 	textures.add("eb408_door", "T_door_basecolor.png");
 	textures.add("orange_chair", "T_OrangeChair_BaseColor.png");
 	textures.add("eb408_table", "T_Table_BaseColor.png");
-	textures.add("whiteboard", "T_Whiteboard_BaseColor.png");
+	textures.add("whiteboard", "T_Whiteboard_Drawn_BaseColor.png");
+	textures.add("monitor", "T_Monitor_BaseColor.png");
 }
 
 void Application::createScenes() {
 	auto shaders = createShaders();
 
 	auto programs = createPrograms(std::move(shaders));
+
+	skybox = std::make_optional(std::move(Skybox(programs.at("skybox"), { "cubemap/posx.jpg", "cubemap/negx.jpg",
+		"cubemap/posy.jpg", "cubemap/negy.jpg", "cubemap/posz.jpg", "cubemap/negz.jpg"},
+		models.get("skybox"))));
 
 	// create scenes
     std::vector<std::unique_ptr<DrawableObject>> objects;
@@ -277,10 +297,10 @@ void Application::createScenes() {
 	std::uniform_real_distribution<float> randomShade(0.0f, 0.3f);
 	std::uniform_real_distribution<float> randomScale(0.7f, 1.0f);
 	
-	auto skyTransform = std::make_shared<TransformComposite>();
+	// auto skyTransform = std::make_shared<TransformComposite>();
 
-	glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
-	glm::vec3 nightColor{0.01f, 0.01f, 0.06f};
+	// glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
+	// glm::vec3 nightColor{0.01f, 0.01f, 0.06f};
 
 	float tm = glfwGetTime();
 	float cycleDuration = 600.0f;		// duration of day-night cycle in seconds
@@ -290,17 +310,17 @@ void Application::createScenes() {
 
 	float daylight = (1.0f - cos(glm::radians(cycleAngle))) / 2.0f;
 
-	glm::vec3 skyColor = glm::mix(nightColor, dayColor, daylight);
+	// glm::vec3 skyColor = glm::mix(nightColor, dayColor, daylight);
 
-	skyTransform->add(std::make_shared<Scale>(50.0f));
-	auto sky = std::make_unique<DrawableObject>(models.get("sphere"),
-										programs.at("sky"),
-										skyTransform
-									);
+	// skyTransform->add(std::make_shared<Scale>(50.0f));
+	// auto sky = std::make_unique<DrawableObject>(models.get("sphere"),
+	// 									programs.at("sky"),
+	// 									skyTransform
+	// 								);
 
-	sky->setUniform("shade", skyColor);
+	// sky->setUniform("shade", skyColor);
 
-	objects.push_back(std::move(sky));
+	// objects.push_back(std::move(sky));
 
 	auto clockTransform1 = std::make_shared<TransformComposite>();
 	clockTransform1->add(std::make_shared<Scale>(0.05f));
@@ -541,7 +561,7 @@ void Application::createScenes() {
 	ebtransform->add(std::make_shared<Scale>(glm::vec3{-0.2f, 0.2f, 0.2f}));
 
 	objects.push_back(std::make_unique<DrawableObject>(models.get("eb408"),
-				programs.at("texture"),
+				programs.at("texturephong"),
 				ebtransform, std::make_optional(textures.get("eb408"))));
 
 	auto doortransform = std::make_shared<TransformComposite>();
@@ -549,11 +569,11 @@ void Application::createScenes() {
 	doortransform->add(std::make_shared<Translation>(glm::vec3{0.7f, 0.0f, 1.55f}));
 
 	objects.push_back(std::make_unique<DrawableObject>(models.get("eb408_door"),
-				programs.at("texture"),
+				programs.at("texturephong"),
 				doortransform, std::make_optional(textures.get("eb408_door"))));
 
 	auto whiteboardTransform = std::make_shared<TransformComposite>();
-	whiteboardTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+	whiteboardTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, -0.2f}));
 	whiteboardTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(180.0f), 0.0f}));
 	whiteboardTransform->add(std::make_shared<Translation>(glm::vec3{0.76f, 0.0f, 0.7f}));
 
@@ -565,7 +585,7 @@ void Application::createScenes() {
 			tableTransform->add(std::make_shared<Translation>(glm::vec3{tableX * 0.37f - 0.05f, 0.0f, tableZ * 0.37f + 0.3f}));
 
 			objects.push_back(std::make_unique<DrawableObject>(models.get("eb408_table"),
-				programs.at("texture"),
+				programs.at("texturephong"),
 				tableTransform, std::make_optional(textures.get("eb408_table"))));
 		}
 	}
@@ -578,14 +598,27 @@ void Application::createScenes() {
 			chairTransform->add(std::make_shared<Translation>(glm::vec3{chairX * 0.37f - 0.20f, 0.0f, chairZ * 0.185f + 0.205f}));
 
 			objects.push_back(std::make_unique<DrawableObject>(models.get("orange_chair"),
-				programs.at("texture"),
+				programs.at("texturephong"),
 				chairTransform, std::make_optional(textures.get("orange_chair"))));
+
+		}
+	}
+	for (int monX = -1; monX < 2; ++monX) {
+		for (int monZ = 0; monZ < 6; ++monZ) {
+			auto monTransform = std::make_shared<TransformComposite>();
+			monTransform->add(std::make_shared<Scale>(glm::vec3{-0.1f, 0.1f, 0.1f}));
+			monTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(0.0f), 0.0f}));
+			monTransform->add(std::make_shared<Translation>(glm::vec3{monX * 0.37f - 0.05f, 0.13f, monZ * 0.185f + 0.205f}));
+
+			objects.push_back(std::make_unique<DrawableObject>(models.get("monitor"),
+				programs.at("texturephong"),
+				monTransform, std::make_optional(textures.get("monitor"))));
 
 		}
 	}
 
 	objects.push_back(std::make_unique<DrawableObject>(models.get("whiteboard"),
-				programs.at("texture"),
+				programs.at("texturephong"),
 				whiteboardTransform, std::make_optional(textures.get("whiteboard"))));
 
 	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
@@ -636,6 +669,7 @@ void Application::run() {
 		previousTime = now;
 
 
+
 	glm::ivec3 t = getTimeHMS();
 
 	float secAngle = glm::radians(-static_cast<float>(t.z % 60 * 6));
@@ -651,19 +685,19 @@ void Application::run() {
 		scenes[2].getObject(i)->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	}
 
-	glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
-	glm::vec3 nightColor{0.01f, 0.01f, 0.06f};
+	// glm::vec3 dayColor{0.4f, 0.7f, 1.0f};
+	// glm::vec3 nightColor{0.01f, 0.01f, 0.06f};
 
-	float tm = glfwGetTime();
-	float cycleDuration = 600.0f;		// duration of day-night cycle in seconds
-	float cycle = fmod(tm, cycleDuration) / cycleDuration;
-	float cycleAngle = cycle * 360.0f;
+	// float tm = glfwGetTime();
+	// float cycleDuration = 600.0f;		// duration of day-night cycle in seconds
+	// float cycle = fmod(tm, cycleDuration) / cycleDuration;
+	// float cycleAngle = cycle * 360.0f;
 
-	float daylight = (1.0f - cos(glm::radians(cycleAngle))) / 2.0f;
+	// float daylight = (1.0f - cos(glm::radians(cycleAngle))) / 2.0f;
 
-	glm::vec3 skyColor = glm::mix(nightColor, dayColor, daylight);
+	// glm::vec3 skyColor = glm::mix(nightColor, dayColor, daylight);
 
-	scenes[2].getObject(0)->setUniform("shade", skyColor);
+	// scenes[2].getObject(0)->setUniform("shade", skyColor);
 
 		// handle input
 	if (glfwGetKey(window.get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
@@ -690,7 +724,16 @@ void Application::run() {
 
 	run = false;
 
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (currentScene == 7 
+			|| currentScene == 2
+		) {
+			if (skybox.has_value()) {
+				skybox->draw();
+			}
+		}
 
 		scenes[currentScene].update(deltaTime);
 		scenes[currentScene].render();

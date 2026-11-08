@@ -45,6 +45,7 @@ add_executable(OpenGLProject
     src/camera.cpp
     src/texture.cpp
     src/texturemanager.cpp
+    src/skybox.cpp
 )
 
 target_include_directories(OpenGLProject

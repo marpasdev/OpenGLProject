@@ -31,6 +31,8 @@
 #include "model.h"
 #include "modelmanager.h"
 #include "texturemanager.h"
+#include "skybox.h"
+#include <optional>
 
 #include "camera.h" 
 
@@ -51,6 +53,8 @@ class Application {
 
     ModelManager models;
     TextureManager textures;
+
+    std::optional<Skybox> skybox;
 
     void initializeGLFW(int width, int height);
 

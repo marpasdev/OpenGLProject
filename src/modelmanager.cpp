@@ -34,6 +34,12 @@ ModelManager::ModelManager() {
 	posNorUV.push_back({3, GL_FLOAT});
 	posNorUV.push_back({2, GL_FLOAT});
 	layoutPresets[VertexLayoutPreset::PosNorUV] = posNorUV;
+
+	std::vector<VertexAttribute> posNorUVW;
+	posNorUVW.push_back({3, GL_FLOAT});
+	posNorUVW.push_back({3, GL_FLOAT});
+	posNorUVW.push_back({3, GL_FLOAT});
+	layoutPresets[VertexLayoutPreset::PosNorUVW] = posNorUVW;
 }
 
 void ModelManager::add(const std::string& name, const float* vertexData, size_t vertexDataSize, VertexLayoutPreset layout) {
@@ -44,7 +50,7 @@ void ModelManager::add(const std::string& name, const float* vertexData, size_t 
     models[name] = std::make_shared<Model>(vertexData, vertexDataSize, layout);
 }
 
-void ModelManager::add(const std::string& name, const std::string path) {
+void ModelManager::add(const std::string& name, const std::string path, VertexLayoutPreset layout) {
 	Assimp::Importer importer;
 
 	const aiScene* scene = importer.ReadFile("assets/models/" + path, 
@@ -73,9 +79,15 @@ void ModelManager::add(const std::string& name, const std::string path) {
 				const aiVector3D& nor = mesh->mNormals[idx];
 				data.insert(data.end(), { nor.x, nor.y, nor.z });
 
-				if (mesh->HasTextureCoords(0)) {
-					const aiVector3D& uv = mesh->mTextureCoords[0][idx];
-					data.insert(data.end(), { uv.x, uv.y });
+				if (layout == VertexLayoutPreset::PosNorUV || layout == VertexLayoutPreset::PosNorUVW) {
+
+					aiVector3D uv = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][idx]
+						: aiVector3D(0.0f, 0.0f, 0.0f);
+					if (layout == VertexLayoutPreset::PosNorUV) {
+						data.insert(data.end(), { uv.x, uv.y });
+					} else if (layout == VertexLayoutPreset::PosNorUVW) {
+						data.insert(data.end(), { uv.x, uv.y, uv.z });
+					}
 				} else {
 					data.insert(data.end(), { 0.0f, 0.0f });
 				}
@@ -83,7 +95,7 @@ void ModelManager::add(const std::string& name, const std::string path) {
 		}
 	}
 
-	add(name, data.data(), data.size() * sizeof(float), VertexLayoutPreset::PosNorUV);
+	add(name, data.data(), data.size() * sizeof(float), layout);
 }
 
 std::shared_ptr<Model> ModelManager::get(const std::string& name) const {
