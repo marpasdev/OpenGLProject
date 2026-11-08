@@ -206,11 +206,19 @@ void Application::createModels() {
 	models.add("uvplain", uvplain, sizeof(uvplain), VertexLayoutPreset::PosNorUV);
 
 	models.add("eb408", "EB408.obj");
+	models.add("eb408_door", "Door.obj");
+	models.add("orange_chair", "OrangeChair.obj");
+	models.add("eb408_table", "table.obj");
+	models.add("whiteboard", "Whiteboard.obj");
 }
 
 void Application::createTextures() {
 	textures.add("wood", "wooden_fence.png");
 	textures.add("eb408", "T_EB408.png");
+	textures.add("eb408_door", "T_door_basecolor.png");
+	textures.add("orange_chair", "T_OrangeChair_BaseColor.png");
+	textures.add("eb408_table", "T_Table_BaseColor.png");
+	textures.add("whiteboard", "T_Whiteboard_BaseColor.png");
 }
 
 void Application::createScenes() {
@@ -535,6 +543,50 @@ void Application::createScenes() {
 	objects.push_back(std::make_unique<DrawableObject>(models.get("eb408"),
 				programs.at("texture"),
 				ebtransform, std::make_optional(textures.get("eb408"))));
+
+	auto doortransform = std::make_shared<TransformComposite>();
+	doortransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+	doortransform->add(std::make_shared<Translation>(glm::vec3{0.7f, 0.0f, 1.55f}));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("eb408_door"),
+				programs.at("texture"),
+				doortransform, std::make_optional(textures.get("eb408_door"))));
+
+	auto whiteboardTransform = std::make_shared<TransformComposite>();
+	whiteboardTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+	whiteboardTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(180.0f), 0.0f}));
+	whiteboardTransform->add(std::make_shared<Translation>(glm::vec3{0.76f, 0.0f, 0.7f}));
+
+	for (int tableX = -1; tableX < 2; ++tableX) {
+		for (int tableZ = 0; tableZ < 3; ++tableZ) {
+			auto tableTransform = std::make_shared<TransformComposite>();
+			tableTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+			tableTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(90.0f), 0.0f}));
+			tableTransform->add(std::make_shared<Translation>(glm::vec3{tableX * 0.37f - 0.05f, 0.0f, tableZ * 0.37f + 0.3f}));
+
+			objects.push_back(std::make_unique<DrawableObject>(models.get("eb408_table"),
+				programs.at("texture"),
+				tableTransform, std::make_optional(textures.get("eb408_table"))));
+		}
+	}
+
+	for (int chairX = -1; chairX < 2; ++chairX) {
+		for (int chairZ = 0; chairZ < 6; ++chairZ) {
+			auto chairTransform = std::make_shared<TransformComposite>();
+			chairTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+			chairTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(90.0f), 0.0f}));
+			chairTransform->add(std::make_shared<Translation>(glm::vec3{chairX * 0.37f - 0.20f, 0.0f, chairZ * 0.185f + 0.205f}));
+
+			objects.push_back(std::make_unique<DrawableObject>(models.get("orange_chair"),
+				programs.at("texture"),
+				chairTransform, std::make_optional(textures.get("orange_chair"))));
+
+		}
+	}
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("whiteboard"),
+				programs.at("texture"),
+				whiteboardTransform, std::make_optional(textures.get("whiteboard"))));
 
 	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),

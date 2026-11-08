@@ -1,0 +1,12 @@
+# Blender 5.2.3 LTS MTL File: 'OrangeChair.blend'
+# www.blender.org
+
+newmtl M_OrangeChair
+Ns 200.000000
+Ka 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd /home/marpas/Downloads/T_OrangeChair_BaseColor.png
+map_d /home/marpas/Downloads/T_OrangeChair_BaseColor.png
