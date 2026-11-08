@@ -44,6 +44,8 @@ public:
 
     void setUniform(const std::string& name, GLfloat x) const;
 
+    void setUniform(const std::string& name, GLint x) const;
+
     void setUniform(const std::string& name, const glm::vec3& v) const;
     
     void setUniform(const std::string& name, const glm::vec4& v) const;

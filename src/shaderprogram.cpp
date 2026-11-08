@@ -78,6 +78,18 @@ void ShaderProgram::setUniform(const std::string& name, GLfloat x) const {
     }
 }
 
+void ShaderProgram::setUniform(const std::string& name, GLint x) const {
+    GLint loc = getUniform(name);
+    
+    if (loc != -1) {
+        glUseProgram(id);
+
+        glUniform1i(loc, x);
+
+        glUseProgram(0);
+    }
+}
+
 void ShaderProgram::setUniform(const std::string& name, const glm::vec3& v) const {
     GLint loc = getUniform(name);
 

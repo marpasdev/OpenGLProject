@@ -22,7 +22,8 @@
 
 enum class VertexLayoutPreset {
     PosNor,
-    PosNorCol
+    PosNorCol,
+    PosNorUV
 };
 
 class ModelManager {
@@ -36,6 +37,8 @@ public:
     void add(const std::string& name, const float* vertexData, size_t vertexDataSize, VertexLayoutPreset layout = VertexLayoutPreset::PosNor);
     
     void add(const std::string& name, const float* vertexData, size_t vertexDataSize, const std::vector<VertexAttribute>& layout);
+
+    void add(const std::string& name, const std::string path);
 
     std::shared_ptr<Model> get(const std::string& name) const;
 };

@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
+find_package(assimp REQUIRED)
 
 add_library(glad STATIC
     external/glad/src/gl.c
@@ -16,6 +17,14 @@ add_library(glad STATIC
 target_include_directories(glad
     PUBLIC
         ${PROJECT_SOURCE_DIR}/external/glad/include
+)
+
+add_library(stbi INTERFACE
+)
+
+target_include_directories(stbi
+    INTERFACE
+        ${PROJECT_SOURCE_DIR}/external/stbi
 )
 
 add_executable(OpenGLProject
@@ -34,6 +43,8 @@ add_executable(OpenGLProject
     src/scene.cpp
     src/application.cpp
     src/camera.cpp
+    src/texture.cpp
+    src/texturemanager.cpp
 )
 
 target_include_directories(OpenGLProject
@@ -44,7 +55,9 @@ target_include_directories(OpenGLProject
 target_link_libraries(OpenGLProject
     PRIVATE
         glad
+        stbi
         glfw
+        assimp::assimp
         glm::glm
         OpenGL::GL
 )

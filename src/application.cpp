@@ -79,8 +79,6 @@ void Application::initializeGLFW(int width, int height) {
 		exit(EXIT_FAILURE);
 	}
 
-	// onResize(width, height);
-	
 	glfwMakeContextCurrent(window.get());
 	glfwSwapInterval(1);
 
@@ -133,6 +131,9 @@ std::unordered_map<std::string, std::unique_ptr<Shader>> Application::createShad
 
 	shaders["v_constant"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/constant.vert");
 	shaders["f_constant"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/constant.frag");
+	
+	shaders["v_texture"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/texture.vert");
+	shaders["f_texture"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/texture.frag");
 	return std::move(shaders);
 }
 
@@ -153,6 +154,8 @@ std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> Application::cre
 	programs["phong9"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong9"), *shaders.at("f_phong9"), &camera);
 	programs["blinnphong"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong"), *shaders.at("f_blinn"), &camera);
 	programs["constant"] = std::make_unique<ShaderProgram>(*shaders.at("v_constant"), *shaders.at("f_constant"), &camera);
+
+	programs["texture"] = std::make_unique<ShaderProgram>(*shaders.at("v_texture"), *shaders.at("f_texture"), &camera);
 	return programs;
 }
 
@@ -189,6 +192,25 @@ void Application::createModels() {
 	models.add("satellite", satellite, sizeof(satellite), VertexLayoutPreset::PosNorCol);
 
 	models.add("clock", clockModel, sizeof(clockModel), VertexLayoutPreset::PosNorCol);
+
+	const float uvplain[] = {
+    //position, normal, uv coordinate
+    1.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 0.0f,
+    1.0f, 0.0f,-1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,
+   -1.0f, 0.0f,-1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+ 
+   -1.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f,
+    1.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 0.0f,
+   -1.0f, 0.0f,-1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f
+	};
+	models.add("uvplain", uvplain, sizeof(uvplain), VertexLayoutPreset::PosNorUV);
+
+	models.add("eb408", "EB408.obj");
+}
+
+void Application::createTextures() {
+	textures.add("wood", "wooden_fence.png");
+	textures.add("eb408", "T_EB408.png");
 }
 
 void Application::createScenes() {
@@ -502,6 +524,23 @@ void Application::createScenes() {
 									programs.at("basic"),
 									signatureTransform
 								));
+	scenes.push_back(Scene(std::move(objects)));
+
+	// Scene 7 - Classroom
+	objects.clear();
+
+	auto ebtransform = std::make_shared<TransformComposite>();
+	ebtransform->add(std::make_shared<Scale>(glm::vec3{-0.2f, 0.2f, 0.2f}));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("eb408"),
+				programs.at("texture"),
+				ebtransform, std::make_optional(textures.get("eb408"))));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
+									programs.at("basic"),
+									signatureTransform
+								));
+
 	scenes.push_back(Scene(std::move(objects)));
 
 }

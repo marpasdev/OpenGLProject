@@ -30,8 +30,9 @@
 #include "shaderprogram.h"
 #include "model.h"
 #include "modelmanager.h"
+#include "texturemanager.h"
 
-#include "camera.h" // to be removed
+#include "camera.h" 
 
 struct WindowDeleter {
     void operator()(GLFWwindow* window);
@@ -49,6 +50,7 @@ class Application {
     float mouseSensitivity = glm::radians(0.2f);
 
     ModelManager models;
+    TextureManager textures;
 
     void initializeGLFW(int width, int height);
 
@@ -72,6 +74,8 @@ public:
     void initialize(int windowWidth, int windowHeight);
 
     void createModels();
+
+    void createTextures();
 
     void createScenes();
 

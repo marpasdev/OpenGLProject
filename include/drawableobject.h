@@ -18,11 +18,13 @@
 #include "model.h"
 #include "shaderprogram.h"
 #include "transform/transformcomponent.h"
+#include "texture.h"
 
 #include <memory>
 #include <variant>
 #include <unordered_map>
 #include <string>
+#include <optional>
 
 using UniformValue = std::variant<GLfloat, glm::vec3, glm::vec4, glm::mat4>;
 
@@ -31,12 +33,14 @@ class DrawableObject {
     std::shared_ptr<ShaderProgram> program;
     std::shared_ptr<TransformComponent> transform;
     std::unordered_map<std::string, UniformValue> uniforms;
+    std::optional<std::shared_ptr<Texture>> texture;
 
     void setUniforms() const;
     
 public:
     DrawableObject(std::shared_ptr<Model> model, std::shared_ptr<ShaderProgram> program,
-        std::shared_ptr<TransformComponent> transform);
+        std::shared_ptr<TransformComponent> transform,
+        std::optional<std::shared_ptr<Texture>> texture = std::nullopt);
 
     std::shared_ptr<TransformComponent> getTransform() const;
 

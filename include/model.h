@@ -17,6 +17,8 @@
 #include <cstddef>
 #include <vector>
 
+#include <assimp/Importer.hpp>
+
 struct VertexAttribute {
     GLint componentCount;
     GLenum type;

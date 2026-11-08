@@ -15,8 +15,10 @@
 #include "drawableobject.h"
 
 DrawableObject::DrawableObject(std::shared_ptr<Model> model, std::shared_ptr<ShaderProgram> program,
-    std::shared_ptr<TransformComponent> transform)
-    : model(std::move(model)), program(std::move(program)), transform(std::move(transform)) {}
+    std::shared_ptr<TransformComponent> transform,
+    std::optional<std::shared_ptr<Texture>> texture)
+    : model(std::move(model)), program(std::move(program)), transform(std::move(transform)),
+        texture(texture) {}
 
 std::shared_ptr<TransformComponent> DrawableObject::getTransform() const {
     return transform;
@@ -45,6 +47,10 @@ void DrawableObject::setUniforms() const {
             program->setUniform(name, value);
         }, value);
     }
+
+    if (texture.has_value()) {
+        program->setUniform("textureUnitID", 0);
+    }
 }
 
 void DrawableObject::update(float deltaTime) {
@@ -58,6 +64,10 @@ void DrawableObject::draw() const {
     setUniforms();
 
     program->use();
+
+    if (texture.has_value()) {
+        texture.value()->bind();
+    }
 
     model->render();
 
