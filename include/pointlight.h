@@ -1,5 +1,5 @@
 /**
- * @file lighting.h
+ * @file pointlight.h
  *
  * @brief Declaration of the Lighting class.
  *
@@ -10,12 +10,12 @@
  * @year 2026
  **/
 
-#ifndef LIGHTING_H
-#define LIGHTING_H
+#ifndef POINTLIGHT_H
+#define POINTLIGHT_H
 
 #include <glm/vec3.hpp>
 
-class Lighting {
+class PointLight {
     glm::vec3 position = glm::vec3{0.0f};
     glm::vec3 color = glm::vec3{1.0f};
     float intensity = 1.0f;
@@ -25,7 +25,7 @@ class Lighting {
     float quadratic = 0.032f;
 
 public:
-    Lighting(const glm::vec3& position, const glm::vec3& color, float intensity);
+    PointLight(const glm::vec3& position, const glm::vec3& color, float intensity);
 };
 
-#endif // LIGHTING_H
+#endif // POINTLIGHT_H

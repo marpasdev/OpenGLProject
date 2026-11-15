@@ -45,6 +45,14 @@ glm::vec3 Camera::getPosition() const {
     return eye;
 }
 
+void Camera::setResolution(const glm::vec2& res) {
+    this->resolution = res;
+}
+
+glm::vec2 Camera::getResolution() const {
+    return this->resolution;
+}
+
 void Camera::attach(CameraObserver* o) {
     observers.push_back(o);
     o->onCameraChanged(*this);

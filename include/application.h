@@ -40,6 +40,12 @@ struct WindowDeleter {
     void operator()(GLFWwindow* window);
 };
 
+enum class InteractionMode {
+    PlaceMode,
+    InteractMode,
+    DeleteMode
+};
+
 class Application {
     std::unique_ptr<GLFWwindow, WindowDeleter> window;
     Camera camera;
@@ -55,6 +61,14 @@ class Application {
     TextureManager textures;
 
     std::optional<Skybox> skybox;
+
+    std::optional<glm::vec3> placeStart;
+
+    std::vector<std::pair<std::string, std::shared_ptr<DrawableObject>>> objectInventory;
+
+    int selectedObject = 0;
+
+    InteractionMode intmode = InteractionMode::PlaceMode;
 
     void initializeGLFW(int width, int height);
 

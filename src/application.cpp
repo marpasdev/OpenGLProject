@@ -44,6 +44,7 @@
 #include "transform/static/scale.h"
 
 #include "transform/dynamic/dynamicrotation.h"
+#include "transform/dynamic/backandforthtranslation.h"
 
 #include "skybox.h"
 
@@ -101,6 +102,7 @@ void Application::initialize(int windowWidth, int windowHeight) {
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
 }
 
 std::unordered_map<std::string, std::unique_ptr<Shader>> Application::createShaders() const {
@@ -133,6 +135,9 @@ std::unordered_map<std::string, std::unique_ptr<Shader>> Application::createShad
 
 	shaders["v_constant"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/constant.vert");
 	shaders["f_constant"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/constant.frag");
+
+	shaders["v_treephong"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/tree_phong.vert");
+	shaders["f_treephong"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/tree_phong.frag");
 	
 	shaders["v_texture"] = std::make_unique<Shader>(GL_VERTEX_SHADER, "shaders/vertex/texture.vert");
 	shaders["f_texture"] = std::make_unique<Shader>(GL_FRAGMENT_SHADER, "shaders/fragment/texture.frag");
@@ -164,6 +169,8 @@ std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> Application::cre
 	programs["blinnphong"] = std::make_unique<ShaderProgram>(*shaders.at("v_phong"), *shaders.at("f_blinn"), &camera);
 	programs["constant"] = std::make_unique<ShaderProgram>(*shaders.at("v_constant"), *shaders.at("f_constant"), &camera);
 
+	programs["treephong"] = std::make_unique<ShaderProgram>(*shaders.at("v_treephong"), *shaders.at("f_treephong"), &camera);
+
 	programs["texture"] = std::make_unique<ShaderProgram>(*shaders.at("v_texture"), *shaders.at("f_texture"), &camera);
 
 	programs["texturephong"] = std::make_unique<ShaderProgram>(*shaders.at("v_texturephong"), *shaders.at("f_texturephong"), &camera);
@@ -194,14 +201,17 @@ void Application::createModels() {
 	models.add("login", login, sizeof(login));
 	models.add("tree", tree, sizeof(tree));
 	models.add("bush", bushes, sizeof(bushes));
+	models.add("terrain", "teren.obj");
 
 	// solar system
 	models.add("sun", sun, sizeof(sun), VertexLayoutPreset::PosNorCol);
 	models.add("mercury", mercury, sizeof(mercury), VertexLayoutPreset::PosNorCol);
 	models.add("venus", venus, sizeof(venus), VertexLayoutPreset::PosNorCol);
-	models.add("earth", earth, sizeof(earth), VertexLayoutPreset::PosNorCol);
+	// models.add("earth", earth, sizeof(earth), VertexLayoutPreset::PosNorCol);
 	models.add("moon", moon, sizeof(moon), VertexLayoutPreset::PosNorCol);
 	models.add("satellite", satellite, sizeof(satellite), VertexLayoutPreset::PosNorCol);
+
+	models.add("planet", "planet.obj");
 
 	models.add("clock", clockModel, sizeof(clockModel), VertexLayoutPreset::PosNorCol);
 
@@ -229,18 +239,48 @@ void Application::createModels() {
 
 void Application::createTextures() {
 	textures.add("wood", "wooden_fence.png");
+	textures.add("grass", "grass.png");
+
+	// Classroom
 	textures.add("eb408", "T_EB408.png");
 	textures.add("eb408_door", "T_door_basecolor.png");
 	textures.add("orange_chair", "T_OrangeChair_BaseColor.png");
 	textures.add("eb408_table", "T_Table_BaseColor.png");
 	textures.add("whiteboard", "T_Whiteboard_Drawn_BaseColor.png");
 	textures.add("monitor", "T_Monitor_BaseColor.png");
+
+	// Space
+	textures.add("sun", "sun2k.jpg");
+	textures.add("mercury", "mercury8k.jpg");
+	textures.add("venus", "venus2k.jpg");
+	textures.add("earth", "earth8k.jpg");
+	textures.add("moon", "moon2k.jpg");
+	textures.add("mars", "mars2k.jpg");
+	textures.add("jupiter", "jupiter2k.jpg");
+	textures.add("saturn", "saturn2k.jpg");
+}
+
+std::shared_ptr<TransformComposite> createPlanetTransform(float scale, float axialTilt, float spinLengthInDays, float yearLength, float distance) {
+	auto planetTransform = std::make_shared<TransformComposite>();
+	planetTransform->add(std::make_shared<Scale>(glm::vec3{-scale, scale, scale}));
+	planetTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / spinLengthInDays), true));
+	planetTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(axialTilt), 0.0f, 0.0f}));
+	planetTransform->add(std::make_shared<Translation>(glm::vec3{distance, 0.0f, 0.0f}));
+	planetTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / yearLength), false));
+	return planetTransform;
 }
 
 void Application::createScenes() {
 	auto shaders = createShaders();
 
 	auto programs = createPrograms(std::move(shaders));
+
+	objectInventory.push_back({"Tree", std::make_shared<DrawableObject>(
+		models.get("tree"), programs.at("tree"), std::make_shared<Scale>(0.1f)
+	)});
+	objectInventory.push_back({"Chair", std::make_shared<DrawableObject>(
+		models.get("orange_chair"), programs.at("texturephong"), std::make_shared<Scale>(0.2f), textures.get("orange_chair")
+	)});
 
 	skybox = std::make_optional(std::move(Skybox(programs.at("skybox"), { "cubemap/posx.jpg", "cubemap/negx.jpg",
 		"cubemap/posy.jpg", "cubemap/negy.jpg", "cubemap/posz.jpg", "cubemap/negz.jpg"},
@@ -276,6 +316,7 @@ void Application::createScenes() {
 
 	auto littleSphereTransform = std::make_shared<TransformComposite>();
 	littleSphereTransform->add(std::make_shared<Scale>(0.2f));
+	littleSphereTransform->add(std::make_shared<BackAndForthTranslation>(glm::vec3{1.0f}, glm::vec3{5.0f}, 2.0f));
 	objects.push_back(std::make_unique<DrawableObject>(models.get("sphere"),
 			programs.at("basic"), littleSphereTransform));
 
@@ -287,12 +328,12 @@ void Application::createScenes() {
 	scenes.push_back(Scene(std::move(objects)));
 
 	
-	// Scene 2
+	// Scene 2 - Forest
 	objects.clear();
 
 	std::mt19937 rng{std::random_device{}()};
 
-	std::uniform_real_distribution<float> dist(-2.0f, 2.0f);
+	std::uniform_real_distribution<float> dist(-4.0f, 4.0f);
 	std::uniform_real_distribution<float> randomAngle(0.0f, 360.0f);
 	std::uniform_real_distribution<float> randomShade(0.0f, 0.3f);
 	std::uniform_real_distribution<float> randomScale(0.7f, 1.0f);
@@ -357,15 +398,22 @@ void Application::createScenes() {
 
 	objects.push_back(std::move(clockObject2));						
 
-	auto plainTransform = std::make_shared<TransformComposite>();
-	plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
-	objects.push_back(std::make_unique<DrawableObject>(models.get("plain"),
-									programs.at("lightgreen"),
-									plainTransform
+	// auto plainTransform = std::make_shared<TransformComposite>();
+	// plainTransform->add(std::make_shared<Scale>(glm::vec3(10.0f, 0.0f, 10.0f)));
+	// objects.push_back(std::make_unique<DrawableObject>(models.get("plain"),
+	// 								programs.at("lightgreen"),
+	// 								plainTransform
+	// 								));
+	auto terrainTransform = std::make_shared<TransformComposite>();
+	terrainTransform->add(std::make_shared<Scale>(glm::vec3(0.1f, 0.1f, 0.1f)));
+	objects.push_back(std::make_unique<DrawableObject>(models.get("terrain"),
+									programs.at("texture"),
+									terrainTransform,
+									textures.get("grass")
 									));
 	for (size_t i = 0; i < 74; ++i) {
 		auto treeTransform = std::make_shared<TransformComposite>();
-		treeTransform->add(std::make_shared<Scale>(0.06f * randomScale(rng)));
+		treeTransform->add(std::make_shared<Scale>(0.1f * randomScale(rng)));
 		treeTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
 		treeTransform->add(std::make_shared<Translation>(glm::vec3(dist(rng), 0.0f, dist(rng))));
 
@@ -376,7 +424,7 @@ void Application::createScenes() {
 		tree->setUniform("shade", randomShade(rng));
 		objects.push_back(std::move(tree));									
 	}
-	for (size_t i = 0; i < 250; ++i) {
+	for (size_t i = 0; i < 50; ++i) {
 		auto bushTransform = std::make_shared<TransformComposite>();
 		bushTransform->add(std::make_shared<Scale>(0.2f));
 		bushTransform->add(std::make_shared<Rotation>(glm::vec3(0.0f, glm::radians(randomAngle(rng)), 0.0f)));
@@ -387,22 +435,22 @@ void Application::createScenes() {
 										));
 	}
 	
-	auto forestSunTransform = std::make_shared<TransformComposite>();
-	forestSunTransform->add(std::make_shared<Scale>(1.0f));
-	forestSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, -12.0f, 12.0f)));
-	forestSunTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), -1.0f));
-	objects.push_back(std::make_unique<DrawableObject>(models.get("sphere"),
-									 programs.at("yellow"),
-									 forestSunTransform
-									 ));
-	auto forestMoonTransform = std::make_shared<TransformComposite>();
-	forestMoonTransform->add(std::make_shared<Scale>(1.0f));
-	forestMoonTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 12.0f, -12.0f)));
-	forestMoonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), 1.0f));
-	objects.push_back(std::make_unique<DrawableObject>(models.get("moon"),
-									 programs.at("pvm9"),
-									 forestMoonTransform
-									 ));
+	// auto forestSunTransform = std::make_shared<TransformComposite>();
+	// forestSunTransform->add(std::make_shared<Scale>(1.0f));
+	// forestSunTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, -12.0f, 12.0f)));
+	// forestSunTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), -1.0f));
+	// objects.push_back(std::make_unique<DrawableObject>(models.get("sphere"),
+	// 								 programs.at("yellow"),
+	// 								 forestSunTransform
+	// 								 ));
+	// auto forestMoonTransform = std::make_shared<TransformComposite>();
+	// forestMoonTransform->add(std::make_shared<Scale>(1.0f));
+	// forestMoonTransform->add(std::make_shared<Translation>(glm::vec3(0.0f, 12.0f, -12.0f)));
+	// forestMoonTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(anglePerSecond), 1.0f));
+	// objects.push_back(std::make_unique<DrawableObject>(models.get("moon"),
+	// 								 programs.at("pvm9"),
+	// 								 forestMoonTransform
+	// 								 ));
 	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
@@ -420,16 +468,17 @@ void Application::createScenes() {
 								));
 	scenes.push_back(Scene(std::move(objects)));
 	
-	// Scene 4 - solar system
+	// Scene 4 - Solar system
 	objects.clear();
 	// Sun
 	auto sunTransform = std::make_shared<TransformComposite>();
 	sunTransform->add(std::make_shared<Scale>(0.2f));
 	auto sunSpin = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 6.0f), false);
 	sunTransform->add(sunSpin);
-	objects.push_back(std::make_unique<DrawableObject>(models.get("sun"),
-			programs.at("pvm9"),
-			sunTransform
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texture"),
+			sunTransform,
+			textures.get("sun")
 			));
 
 	float baseScale = 0.1f;
@@ -438,32 +487,34 @@ void Application::createScenes() {
 	mercuryTransform->add(std::make_shared<Scale>(baseScale * 0.389f));
 	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 4.0f), true));
 	// mercuryTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(0.0f), 0.0f, 0.0f}));	// unnecessary - axis tilt angle is near 0
-	mercuryTransform->add(std::make_shared<Translation>(glm::vec3{0.6f, 0.0f, 0.0f}));
+	mercuryTransform->add(std::make_shared<Translation>(glm::vec3{0.7f, 0.0f, 0.0f}));
 	mercuryTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 115.88f), false));
-	objects.push_back(std::make_unique<DrawableObject>(models.get("mercury"),
-			programs.at("phong9"), mercuryTransform));
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texturephong"), mercuryTransform,
+			textures.get("mercury")));
 			
 	// Venus
 	auto venusTransform = std::make_shared<TransformComposite>();
 	venusTransform->add(std::make_shared<Scale>(baseScale * 0.949f));
 	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 4.0f), true));
 	venusTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(177.4f), 0.0f, 0.0f}));
-	venusTransform->add(std::make_shared<Translation>(glm::vec3{1.1f, 0.0f, 0.0f}));
+	venusTransform->add(std::make_shared<Translation>(glm::vec3{1.3f, 0.0f, 0.0f}));
 	venusTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3{0.0f, 1.0f, 0.0f}, glm::radians(360.0f / 224.7f), false));
-	objects.push_back(std::make_unique<DrawableObject>(models.get("venus"),
-			programs.at("phong9"), venusTransform));
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texturephong"), venusTransform, textures.get("venus")));
 
 	// Earth
 	auto earthTransform = std::make_shared<TransformComposite>();
-	earthTransform->add(std::make_shared<Scale>(baseScale));
+	earthTransform->add(std::make_shared<Scale>(glm::vec3{-baseScale, baseScale, baseScale}));
 	earthTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 1.0f), true));
-	earthTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(23.0f), 0.0f, 0.0f}));
+	earthTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(23.44f), 0.0f, 0.0f}));
 	earthTransform->add(std::make_shared<Translation>(glm::vec3(1.8f, 0.0f, 0.0f)));
 	auto earthOrbit = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 365.0f), false);
 	earthTransform->add(earthOrbit);
-	objects.push_back(std::make_unique<DrawableObject>(models.get("earth"),
-			programs.at("phong9"),
-			earthTransform
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texturephong"),
+			earthTransform,
+			textures.get("earth")
 			));
 
 	// Moon
@@ -475,11 +526,12 @@ void Application::createScenes() {
 	moonTransform->add(std::make_shared<Translation>(glm::vec3(1.8f, 0.0f, 0.0f)));
 	moonTransform->add(earthOrbit);
 
-	objects.push_back(std::make_unique<DrawableObject>(models.get("moon"),
-			programs.at("phong9"),
-			moonTransform
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texturephong"),
+			moonTransform,
+			textures.get("moon")
 			));
-		
+
 	auto satelliteTransform = std::make_shared<TransformComposite>();
 	satelliteTransform->add(std::make_shared<Scale>(0.07f));
 	satelliteTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(0.0f), 0.0f, glm::radians(90.0f)}));
@@ -491,12 +543,41 @@ void Application::createScenes() {
 			satelliteTransform
 			));
 
+	auto marsTransform = std::make_shared<TransformComposite>();
+	marsTransform->add(std::make_shared<Scale>(glm::vec3{-baseScale, baseScale, baseScale} * 0.532f));
+	marsTransform->add(std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 1.0f), true));
+	marsTransform->add(std::make_shared<Rotation>(glm::vec3{glm::radians(25.19f), 0.0f, 0.0f}));
+	marsTransform->add(std::make_shared<Translation>(glm::vec3(2.74f, 0.0f, 0.0f)));
+	auto marsOrbit = std::make_shared<DynamicRotation>(0.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(360.0f / 687.0f), false);
+	marsTransform->add(marsOrbit);
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texturephong"),
+			marsTransform,
+			textures.get("mars")
+			));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texturephong"),
+			createPlanetTransform(baseScale * 11.21f, glm::radians(3.13f), 10.0f / 24.0f, 11.86 * 365.0f, 9.37f),
+			textures.get("jupiter")
+			));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("planet"),
+			programs.at("texturephong"),
+			createPlanetTransform(baseScale * 9.45, glm::radians(26.73f), 10.5f / 24.0f, 29.46 * 365.0f, 17.17f),
+			textures.get("saturn")
+			));
+
 	objects.push_back(std::make_unique<DrawableObject>(models.get("login"),
 									programs.at("basic"),
 									signatureTransform
 								));
 
-	scenes.push_back(Scene(std::move(objects)));
+	auto spaceSkybox = std::make_optional(std::make_shared<Skybox>(programs.at("skybox"), 
+	std::array<std::string, 6>{"milkyway2k.jpg", "milkyway2k.jpg", "stars2k.jpg",
+		"stars2k.jpg", "milkyway2k.jpg", "milkyway2k.jpg"}, models.get("skybox")));
+
+	scenes.push_back(Scene(std::move(objects), spaceSkybox));
 
 	objects.clear();
 
@@ -566,6 +647,7 @@ void Application::createScenes() {
 
 	auto doortransform = std::make_shared<TransformComposite>();
 	doortransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+	// doortransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(5.0f), 0.0f}));
 	doortransform->add(std::make_shared<Translation>(glm::vec3{0.7f, 0.0f, 1.55f}));
 
 	objects.push_back(std::make_unique<DrawableObject>(models.get("eb408_door"),
@@ -581,14 +663,21 @@ void Application::createScenes() {
 		for (int tableZ = 0; tableZ < 3; ++tableZ) {
 			auto tableTransform = std::make_shared<TransformComposite>();
 			tableTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
-			tableTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(90.0f), 0.0f}));
-			tableTransform->add(std::make_shared<Translation>(glm::vec3{tableX * 0.37f - 0.05f, 0.0f, tableZ * 0.37f + 0.3f}));
+			tableTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(-90.0f), 0.0f}));
+			tableTransform->add(std::make_shared<Translation>(glm::vec3{tableX * 0.37f - 0.1f, 0.0f, tableZ * 0.37f + 0.3f}));
 
 			objects.push_back(std::make_unique<DrawableObject>(models.get("eb408_table"),
 				programs.at("texturephong"),
 				tableTransform, std::make_optional(textures.get("eb408_table"))));
 		}
 	}
+	auto tableTransform = std::make_shared<TransformComposite>();
+	tableTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+	tableTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(90.0f), 0.0f}));
+	tableTransform->add(std::make_shared<Translation>(glm::vec3{1 * 0.37f + 0.09f, 0.0f, 0 * 0.37f + 0.3f}));
+	objects.push_back(std::make_unique<DrawableObject>(models.get("eb408_table"),
+		programs.at("texturephong"),
+		tableTransform, std::make_optional(textures.get("eb408_table"))));
 
 	for (int chairX = -1; chairX < 2; ++chairX) {
 		for (int chairZ = 0; chairZ < 6; ++chairZ) {
@@ -603,6 +692,15 @@ void Application::createScenes() {
 
 		}
 	}
+	auto chairTransform = std::make_shared<TransformComposite>();
+	chairTransform->add(std::make_shared<Scale>(glm::vec3{0.2f, 0.2f, 0.2f}));
+	chairTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(-90.0f), 0.0f}));
+	chairTransform->add(std::make_shared<Translation>(glm::vec3{1 * 0.37f + 0.20f, 0.0f, 0 * 0.185f + 0.205f}));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("orange_chair"),
+		programs.at("texturephong"),
+		chairTransform, std::make_optional(textures.get("orange_chair"))));
+
 	for (int monX = -1; monX < 2; ++monX) {
 		for (int monZ = 0; monZ < 6; ++monZ) {
 			auto monTransform = std::make_shared<TransformComposite>();
@@ -616,6 +714,14 @@ void Application::createScenes() {
 
 		}
 	}
+	auto monTransform = std::make_shared<TransformComposite>();
+	monTransform->add(std::make_shared<Scale>(glm::vec3{-0.1f, 0.1f, 0.1f}));
+	monTransform->add(std::make_shared<Rotation>(glm::vec3{0.0f, glm::radians(180.0f), 0.0f}));
+	monTransform->add(std::make_shared<Translation>(glm::vec3{1 * 0.37f + 0.05f, 0.13f, 0 * 0.185f + 0.205f}));
+
+	objects.push_back(std::make_unique<DrawableObject>(models.get("monitor"),
+		programs.at("texturephong"),
+		monTransform, std::make_optional(textures.get("monitor"))));
 
 	objects.push_back(std::make_unique<DrawableObject>(models.get("whiteboard"),
 				programs.at("texturephong"),
@@ -637,6 +743,19 @@ void Application::keyCallback(GLFWwindow* window, int key, [[maybe_unused]] int 
 	}
 }
 
+std::string modeToString(InteractionMode mode) {
+	if (mode == InteractionMode::PlaceMode) {
+		return "Place mode";
+	}
+	if (mode == InteractionMode::InteractMode) {
+		return "Interaction mode";
+	}
+	if (mode == InteractionMode::DeleteMode) {
+		return "Delete mode";
+	}
+	return "";
+}
+
 void Application::onKey(int key, int action) {
 	if (key == GLFW_KEY_ESCAPE) {
 		glfwSetWindowShouldClose(window.get(), GLFW_TRUE);
@@ -653,7 +772,30 @@ void Application::onKey(int key, int action) {
 			currentScene = index;
 		}
 	}
+	if (action == GLFW_RELEASE && key == GLFW_KEY_UP) {
+		int newMode = static_cast<int>(intmode) + 1;
+		if (newMode >= 3) { newMode = 0; }
+		this->intmode = static_cast<InteractionMode>(newMode);
+		std::cout << "Current mode: " << modeToString(intmode) << "\n";
+	}
+	if (action == GLFW_RELEASE && key == GLFW_KEY_DOWN) {
+		int newMode = static_cast<int>(intmode) - 1;
+		if (newMode < 0) { newMode = 2; }
+		this->intmode = static_cast<InteractionMode>(newMode);
+		std::cout << "Current mode: " << modeToString(intmode) << "\n";
+	}
+	if (action == GLFW_RELEASE && key == GLFW_KEY_RIGHT) {
+		++selectedObject;
+		if (selectedObject >= objectInventory.size()) { selectedObject = 0; }
+		std::cout << "Current object: " << objectInventory.at(selectedObject).first << "\n";
+	}
+	if (action == GLFW_RELEASE && key == GLFW_KEY_LEFT) {
+		--selectedObject;
+		if (selectedObject < 0) { selectedObject = objectInventory.size() - 1; }
+		std::cout << "Current object: " << objectInventory.at(selectedObject).first << "\n";
+	}
 }
+
 
 void Application::run() {
 	double previousTime = glfwGetTime();
@@ -668,8 +810,6 @@ void Application::run() {
 		float deltaTime = static_cast<float>(now - previousTime);
 		previousTime = now;
 
-
-
 	glm::ivec3 t = getTimeHMS();
 
 	float secAngle = glm::radians(-static_cast<float>(t.z % 60 * 6));
@@ -679,7 +819,7 @@ void Application::run() {
 	scenes[5].getObject(0)->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	scenes[5].getObject(0)->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 	scenes[5].getObject(0)->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
-	for (size_t i = 1; i <= 2; ++i) {
+	for (size_t i = 0; i <= 1; ++i) {
 		scenes[2].getObject(i)->setUniform("hourRot", glm::rotate(glm::mat4(1.0f), hourAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 		scenes[2].getObject(i)->setUniform("minuteRot", glm::rotate(glm::mat4(1.0f), minAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
 		scenes[2].getObject(i)->setUniform("secondRot", glm::rotate(glm::mat4(1.0f), secAngle, glm::vec3(0.0f, 0.0f, 1.0f)));							
@@ -700,9 +840,6 @@ void Application::run() {
 	// scenes[2].getObject(0)->setUniform("shade", skyColor);
 
 		// handle input
-	if (glfwGetKey(window.get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		bool run = true;
-	}
 	if (glfwGetKey(window.get(), GLFW_KEY_W) == GLFW_PRESS) {
 		camera.moveForward((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
@@ -722,9 +859,6 @@ void Application::run() {
 		camera.moveDown((run ? runMultiplier : 1.0f) * speed * deltaTime);
 	}
 
-	run = false;
-
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (currentScene == 7 
@@ -734,6 +868,8 @@ void Application::run() {
 				skybox->draw();
 			}
 		}
+
+		scenes[currentScene].drawSkybox();
 
 		scenes[currentScene].update(deltaTime);
 		scenes[currentScene].render();
@@ -752,6 +888,8 @@ void Application::framebufferSizeCallback(GLFWwindow* window, int width, int hei
 
 void Application::onResize(int width, int height) {
 	if (width == 0 || height == 0) { return; }
+
+	camera.setResolution(glm::vec2{static_cast<float>(width), static_cast<float>(height)});
 
 	glViewport(0, 0, width, height);
 	float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
@@ -772,6 +910,108 @@ void Application::onMouseButton(int button, int action) {
 			glfwGetCursorPos(window.get(), &lastX, &lastY);
 		} else if (action == GLFW_RELEASE) {
 			rotating = false;
+		}
+	}
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			glfwGetCursorPos(window.get(), &lastX, &lastY);
+			GLbyte color[4];
+			GLfloat depth;
+			GLuint index;
+
+			float xscale, yscale;
+			int wwidth, wheight;
+
+			glfwGetWindowSize(window.get(), &wwidth, &wheight);
+
+			glfwGetWindowContentScale(window.get(), &xscale, &yscale);
+
+			GLint x = (GLint)lastX;
+			GLint y = (GLint)lastY;
+
+			int newy = camera.getResolution().y - 1 - y;
+
+			glReadPixels(x, newy, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
+			glReadPixels(x, newy, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+			glReadPixels(x, newy, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &index);
+			
+			if (intmode == InteractionMode::InteractMode) {
+				printf("Clicked on pixel %d, %d, color %02hhx%02hhx%02hhx%02hhx, depth %f, stencil index %u\n", x, y, color[0], color[1], color[2], color[3], depth, index);
+			}
+
+			glm::vec3 screenX = glm::vec3(x, newy, depth);
+			glm::mat4 view = camera.getView();
+			glm::mat4 projection = camera.getProjection();
+			glm::vec4 viewPort = glm::vec4(0, 0, camera.getResolution().x, camera.getResolution().y);
+			glm::vec3 pos = glm::unProject(screenX, view, projection, viewPort);
+			
+			if (intmode == InteractionMode::InteractMode) {
+				printf("unProject [%f,%f,%f]\n", pos.x, pos.y, pos.z);
+			}
+
+			if (placeStart == std::nullopt) {
+				placeStart = std::make_optional(glm::vec3{pos.x, pos.y, pos.z});
+			}
+
+			if (intmode == InteractionMode::DeleteMode) {
+				scenes[currentScene].removeObject(index);
+				std::cout << "Deleted \'" << objectInventory.at(selectedObject).first << "\' on coordinates [" << pos.x << ", " << pos.y << 
+					", " << pos.z << "]\n";
+			}
+
+		} else if (action == GLFW_RELEASE) {
+			glfwGetCursorPos(window.get(), &lastX, &lastY);
+			GLfloat depth;
+
+			float xscale, yscale;
+			int wwidth, wheight;
+
+			glfwGetWindowSize(window.get(), &wwidth, &wheight);
+
+			glfwGetWindowContentScale(window.get(), &xscale, &yscale);
+
+			GLint x = (GLint)lastX;
+			GLint y = (GLint)lastY;
+
+			int newy = camera.getResolution().y - 1 - y;
+
+			glReadPixels(x, newy, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+
+			glm::vec3 screenX = glm::vec3(x, newy, depth);
+			glm::mat4 view = camera.getView();
+			glm::mat4 projection = camera.getProjection();
+			glm::vec4 viewPort = glm::vec4(0, 0, camera.getResolution().x, camera.getResolution().y);
+			glm::vec3 pos = glm::unProject(screenX, view, projection, viewPort);
+			
+			// printf("unProject [%f,%f,%f]\n", pos.x, pos.y, pos.z);
+
+			if (intmode == InteractionMode::PlaceMode) {
+				auto placeEnd = glm::vec3{pos.x, pos.y, pos.z};
+
+				auto obj = std::make_shared<DrawableObject>(*(objectInventory.at(selectedObject).second));
+
+				auto placedTransform = std::make_shared<TransformComposite>();
+				placedTransform->add(obj->getTransform());
+				
+				if (placeStart.has_value()) {
+					if (glm::length(placeEnd - placeStart.value()) > 0.10f) {
+						placedTransform->add(std::make_shared<BackAndForthTranslation>(placeStart.value(), placeEnd, 1.0f));
+					} else {
+						placedTransform->add(std::make_shared<Translation>(placeEnd));
+					}
+				} else {
+					placedTransform->add(std::make_shared<Translation>(placeEnd));
+				}
+					
+					obj->setTransform(placedTransform);
+					scenes[currentScene].addObject(*obj);
+
+				placeStart = std::nullopt;
+
+				auto placePos = placeStart.has_value() ? placeStart.value() : placeEnd;
+				std::cout << "Placed \'" << objectInventory.at(selectedObject).first << "\' on coordinates [" << placePos.x << ", " << placePos.y << 
+					", " << placePos.z << "]\n";
+			}
 		}
 	}
 }

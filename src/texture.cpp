@@ -21,18 +21,32 @@
 Texture::Texture(const std::string& path) {
 	stbi_set_flip_vertically_on_load(true);
 
+	GLint internalFormat = 0;
+	int reqcomp = 0;
+
+	std::string png = ".png";
+	std::string jpg = ".jpg";
+	if (std::equal(png.rbegin(), png.rend(), path.rbegin())) {
+		internalFormat = GL_RGBA;
+		reqcomp = STBI_rgb_alpha;
+	} else if (std::equal(jpg.rbegin(), jpg.rend(), path.rbegin())) {
+		internalFormat = GL_RGB;
+		reqcomp = STBI_rgb;
+	}
+
     this->data = stbi_load(path.c_str(), &this->width, &this->height,
-        &this->channels, STBI_rgb_alpha);
+        &this->channels, reqcomp);
 
     if (!data) {
         std::cerr << "Error loading texture: " << path << "\n";
     }
 
+
 	glActiveTexture(GL_TEXTURE0);
 	glGenTextures(1, &this->id);
 	glBindTexture(GL_TEXTURE_2D, this->id);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->data);
+	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, this->width, this->height, 0, internalFormat, GL_UNSIGNED_BYTE, this->data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

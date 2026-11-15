@@ -37,6 +37,7 @@ add_executable(OpenGLProject
     src/transform/static/rotation.cpp
     src/transform/static/scale.cpp
     src/transform/dynamic/dynamicrotation.cpp
+    src/transform/dynamic/backandforthtranslation.cpp
     src/model.cpp
     src/modelmanager.cpp
     src/drawableobject.cpp
@@ -46,6 +47,7 @@ add_executable(OpenGLProject
     src/texture.cpp
     src/texturemanager.cpp
     src/skybox.cpp
+    src/pointlight.cpp
 )
 
 target_include_directories(OpenGLProject

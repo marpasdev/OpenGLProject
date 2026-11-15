@@ -32,6 +32,8 @@ class Camera {
 
     std::vector<CameraObserver*> observers;
 
+    glm::vec2 resolution;
+
     void notify() const;
 
     void updateView();
@@ -45,6 +47,10 @@ public:
     glm::mat4 getProjection() const;
 
     glm::vec3 getPosition() const;
+
+    void setResolution(const glm::vec2& res);
+
+    glm::vec2 getResolution() const;
 
     void attach(CameraObserver* o);
     void detach(CameraObserver* o);
